@@ -2,22 +2,16 @@ version: "2"
 services:
     www:
         build: .
-        ports: 
+        ports:
             - "8080:80"
-        volumes:
-            - ./www:/var/www/html/
-            - ./config/custom.ini:/usr/local/etc/php/conf.d/custom.ini
-            - ./flag/.xmlflag:/etc/.xmlflag
-            - ./flag/.desflag:/etc/.desflag
-            - ./flag/.lfiflag:/etc/.lfiflag
         links:
             - db
         networks:
             - default
         hostname: lab.feifei.tw
     db:
-        image: mysql:5.7.13 
-        ports: 
+        image: mysql:5.7.13
+        ports:
             - "8081:3306"
         environment:
             MYSQL_DATABASE: myDb
@@ -31,7 +25,7 @@ services:
         hostname: lab.feifei.tw
     phpmyadmin:
         image: phpmyadmin/phpmyadmin
-        links: 
+        links:
             - db:db
         ports:
             - 8082:80
@@ -41,35 +35,23 @@ services:
             MYSQL_ROOT_PASSWORD: test
         hostname: lab.feifei.tw
     web2:
-        image: php:7-apache
-        ports: 
+        build:
+            context: .
+            dockerfile: Dockerfile.web2
+        ports:
             - "8083:80"
-        volumes:
-            - ./config/custom.ini:/usr/local/etc/php/conf.d/custom.ini
-            - ./server:/var/www/html/
-            - ./log:/var/log/apache2
         hostname: rcelab.feifei.tw
     web3:
-        image: php:7-apache
-        ports: 
+        build:
+            context: .
+            dockerfile: Dockerfile.web3
+        ports:
             - "8084:80"
-        volumes:
-            - ./config/custom.ini:/usr/local/etc/php/conf.d/custom.ini
-            - ./ctf:/var/www/html/
         hostname: ctflab.feifei.tw
     exam:
-        image: php:7-apache
-        ports: 
+        build:
+            context: .
+            dockerfile: Dockerfile.exam
+        ports:
             - "8085:80"
-        volumes:
-            - ./config/custom.ini:/usr/local/etc/php/conf.d/custom.ini
-            - ./exam:/var/www/html/
         hostname: exam.feifei.tw
-    # options:
-    #     build:
-    #         context: .
-    #         dockerfile: options/Dockerfile
-    #     ports: 
-    #         - "8085:5000"
-    #     volumes:
-    #         - .:/app/
