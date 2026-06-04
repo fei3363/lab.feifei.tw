@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP 協定與安全防護互動式教學</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 15px 25px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .content-section {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            color: #666;
+            margin: 15px 0 10px 0;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        .code-block code {
+            display: block;
+            white-space: pre;
+        }
+
+        .keyword { color: #ff79c6; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        .function { color: #8be9fd; }
+        .number { color: #bd93f9; }
+        .header-name { color: #50fa7b; }
+        .header-value { color: #f1fa8c; }
+
+        .demo-box {
+            background: #f7f9fc;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .vulnerable-demo {
+            border-color: #ff4444;
+            background: #fff5f5;
+        }
+
+        .safe-demo {
+            border-color: #00c853;
+            background: #f0fff4;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+        }
+
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00c853 0%, #009624 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .result-box {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            min-height: 80px;
+        }
+
+        .result-box.vulnerable {
+            border-color: #ff4444;
+            background: #fff5f5;
+        }
+
+        .result-box.safe {
+            border-color: #00c853;
+            background: #f0fff4;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .alert-danger {
+            background: #fff5f5;
+            border-left: 4px solid #ff4444;
+            color: #c53030;
+        }
+
+        .alert-success {
+            background: #f0fff4;
+            border-left: 4px solid #00c853;
+            color: #0e7490;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border-left: 4px solid #ffa726;
+            color: #92400e;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #f59e0b;
+        }
+
+        .tip-box strong {
+            color: #92400e;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f7f9fc;
+        }
+
+        .http-packet {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .packet-header {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+
+        .packet-section {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #569cd6;
+        }
+
+        .method { color: #c586c0; font-weight: bold; }
+        .url { color: #4fc1ff; }
+        .status-code { color: #ce9178; font-weight: bold; }
+        .header-key { color: #9cdcfe; }
+        .header-val { color: #ce9178; }
+
+        .practice-area {
+            background: #f0f4f8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .step-indicator {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            background: #f7f9fc;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .attack-console {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .console-line {
+            margin: 5px 0;
+            padding: 3px 0;
+        }
+
+        .console-line.error {
+            color: #f48771;
+        }
+
+        .console-line.success {
+            color: #89d185;
+            font-weight: bold;
+        }
+
+        .console-line.info {
+            color: #6cb6ff;
+        }
+
+        .console-line.warning {
+            color: #dcdcaa;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .stats-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .dictionary-viewer {
+            background: #f7f9fc;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .dictionary-item {
+            padding: 8px;
+            margin: 3px 0;
+            background: white;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dictionary-item:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+
+        .badge-get { background: #4caf50; color: white; }
+        .badge-post { background: #2196f3; color: white; }
+        .badge-put { background: #ff9800; color: white; }
+        .badge-delete { background: #f44336; color: white; }
+        .badge-200 { background: #4caf50; color: white; }
+        .badge-400 { background: #ff9800; color: white; }
+        .badge-500 { background: #f44336; color: white; }
+
+        .comparison-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .comparison-item {
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .comparison-item.bad {
+            background: #fff5f5;
+            border: 2px solid #ff4444;
+        }
+
+        .comparison-item.good {
+            background: #f0fff4;
+            border: 2px solid #00c853;
+        }
+
+        .flow-diagram {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            margin: 20px 0;
+        }
+
+        .flow-step {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f7f9fc;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            color: #667eea;
+            font-size: 1.5em;
+            margin: 5px 0;
+        }
+
+        .security-level {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .security-level.high-risk {
+            background: #ff4444;
+            color: white;
+        }
+
+        .security-level.medium-risk {
+            background: #ffa726;
+            color: white;
+        }
+
+        .security-level.low-risk {
+            background: #00c853;
+            color: white;
+        }
+
+        .timer {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            background: #f7f9fc;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 HTTP 協定與安全防護教學</h1>
+            <p class="subtitle">從基礎協定到暴力破解防護</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('tab1')">📡 HTTP 協定</button>
+            <button class="tab-button" onclick="showTab('tab2')">📦 封包結構</button>
+            <button class="tab-button" onclick="showTab('tab3')">🔄 重送封包</button>
+            <button class="tab-button" onclick="showTab('tab4')">💥 暴力破解</button>
+            <button class="tab-button" onclick="showTab('tab5')">🛡️ 防護措施</button>
+            <button class="tab-button" onclick="showTab('tab6')">🤖 AI 時代防護</button>
+        </div>
+
+        <!-- Tab 1: HTTP 協定 -->
+        <div id="tab1" class="content-section active">
+            <h2>📡 HTTP 協定基礎</h2>
+
+            <div class="alert alert-info">
+                <strong>💡 什麼是 HTTP？</strong><br>
+                HTTP (HyperText Transfer Protocol，超文本傳輸協定) 是網際網路上最常用的通訊協定。就像你跟網站「對話」的語言。
+            </div>
+
+            <h3>🔹 HTTP 的運作原理</h3>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <strong>1️⃣ 客戶端（瀏覽器）</strong><br>
+                    發送 HTTP 請求 (Request) 到伺服器
+                </div>
+                <div class="flow-arrow">⬇️</div>
+                <div class="flow-step">
+                    <strong>2️⃣ 伺服器</strong><br>
+                    接收請求，處理後準備回應
+                </div>
+                <div class="flow-arrow">⬇️</div>
+                <div class="flow-step">
+                    <strong>3️⃣ 伺服器</strong><br>
+                    發送 HTTP 回應 (Response) 給客戶端
+                </div>
+                <div class="flow-arrow">⬇️</div>
+                <div class="flow-step">
+                    <strong>4️⃣ 客戶端（瀏覽器）</strong><br>
+                    接收回應，顯示網頁內容
+                </div>
+            </div>
+
+            <h3>🔹 HTTP 方法（Methods）</h3>
+
+            <div class="practice-area">
+                <table>
+                    <tr>
+                        <th style="width: 15%">方法</th>
+                        <th style="width: 20%">用途</th>
+                        <th style="width: 35%">說明</th>
+                        <th style="width: 30%">範例</th>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-get">GET</span></td>
+                        <td>讀取資料</td>
+                        <td>從伺服器取得資料，參數放在 URL 中</td>
+                        <td><code>/search?q=關鍵字</code></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-post">POST</span></td>
+                        <td>新增資料</td>
+                        <td>傳送資料到伺服器，參數放在 Body 中</td>
+                        <td>提交表單、上傳檔案</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-put">PUT</span></td>
+                        <td>更新資料</td>
+                        <td>更新伺服器上的資源</td>
+                        <td>修改使用者資料</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-delete">DELETE</span></td>
+                        <td>刪除資料</td>
+                        <td>刪除伺服器上的資源</td>
+                        <td>刪除文章</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HEAD</strong></td>
+                        <td>取得標頭</td>
+                        <td>只取得回應標頭，不取得內容</td>
+                        <td>檢查資源是否存在</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OPTIONS</strong></td>
+                        <td>查詢方法</td>
+                        <td>查詢伺服器支援的方法</td>
+                        <td>CORS 預檢請求</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>🔹 HTTP 狀態碼（Status Code）</h3>
+
+            <div class="two-column">
+                <div>
+                    <h4>2xx - 成功</h4>
+                    <ul>
+                        <li><span class="badge badge-200">200</span> OK - 請求成功</li>
+                        <li><span class="badge badge-200">201</span> Created - 資源已建立</li>
+                        <li><span class="badge badge-200">204</span> No Content - 成功但無內容</li>
+                    </ul>
+
+                    <h4>3xx - 重新導向</h4>
+                    <ul>
+                        <li><strong>301</strong> Moved Permanently - 永久重新導向</li>
+                        <li><strong>302</strong> Found - 暫時重新導向</li>
+                        <li><strong>304</strong> Not Modified - 資源未修改</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4>4xx - 客戶端錯誤</h4>
+                    <ul>
+                        <li><span class="badge badge-400">400</span> Bad Request - 請求錯誤</li>
+                        <li><span class="badge badge-400">401</span> Unauthorized - 未授權</li>
+                        <li><span class="badge badge-400">403</span> Forbidden - 禁止存取</li>
+                        <li><span class="badge badge-400">404</span> Not Found - 找不到資源</li>
+                        <li><span class="badge badge-400">429</span> Too Many Requests - 請求過多</li>
+                    </ul>
+
+                    <h4>5xx - 伺服器錯誤</h4>
+                    <ul>
+                        <li><span class="badge badge-500">500</span> Internal Server Error - 伺服器錯誤</li>
+                        <li><span class="badge badge-500">502</span> Bad Gateway - 閘道錯誤</li>
+                        <li><span class="badge badge-500">503</span> Service Unavailable - 服務無法使用</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔹 GET vs POST 的差異</h3>
+
+            <div class="comparison-box">
+                <div class="comparison-item">
+                    <h4><span class="badge badge-get">GET</span> 請求</h4>
+                    <ul>
+                        <li>參數放在 URL 中（Query String）</li>
+                        <li>參數會顯示在網址列</li>
+                        <li>可以加入書籤</li>
+                        <li>有長度限制（約 2KB）</li>
+                        <li>會被瀏覽器快取</li>
+                        <li>不適合敏感資料</li>
+                    </ul>
+                    <div class="code-block">
+<code>GET /login?username=admin&password=123 HTTP/1.1
+Host: example.com</code>
+                    </div>
+                </div>
+
+                <div class="comparison-item">
+                    <h4><span class="badge badge-post">POST</span> 請求</h4>
+                    <ul>
+                        <li>參數放在請求主體（Body）中</li>
+                        <li>參數不會顯示在網址列</li>
+                        <li>無法加入書籤</li>
+                        <li>沒有長度限制</li>
+                        <li>不會被快取</li>
+                        <li>適合敏感資料</li>
+                    </ul>
+                    <div class="code-block">
+<code>POST /login HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+
+username=admin&password=123</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>💡 互動練習：HTTP 請求模擬器</h4>
+                
+                <div class="input-group">
+                    <label>選擇 HTTP 方法：</label>
+                    <select id="http_method">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>URL 路徑：</label>
+                    <input type="text" id="http_path" value="/api/users" placeholder="/api/users">
+                </div>
+
+                <div class="input-group" id="query_params_group">
+                    <label>Query 參數（GET 用）：</label>
+                    <input type="text" id="query_params" placeholder="id=1&name=test">
+                </div>
+
+                <div class="input-group" id="body_params_group" style="display: none;">
+                    <label>Body 內容（POST/PUT 用）：</label>
+                    <textarea id="body_params" placeholder='{"username": "admin", "password": "123"}'></textarea>
+                </div>
+
+                <button class="btn" onclick="simulateHTTPRequest()">🚀 發送請求</button>
+
+                <div class="http-packet" id="http_request_display">
+                    <div class="packet-header">HTTP 請求封包：</div>
+                    <div id="request_packet">點擊「發送請求」查看封包內容...</div>
+                </div>
+
+                <div class="http-packet" id="http_response_display">
+                    <div class="packet-header">HTTP 回應封包：</div>
+                    <div id="response_packet">等待回應...</div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong>🎯 重點整理：</strong>
+                <ul>
+                    <li><strong>HTTP</strong> 是客戶端與伺服器溝通的協定</li>
+                    <li><strong>GET</strong> 用於讀取，<strong>POST</strong> 用於提交資料</li>
+                    <li><strong>狀態碼</strong> 告訴我們請求的結果</li>
+                    <li>敏感資料（如密碼）應該用 <strong>POST</strong> 而非 GET</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tab 2: 封包結構 -->
+        <div id="tab2" class="content-section">
+            <h2>📦 HTTP 封包結構</h2>
+
+            <div class="alert alert-info">
+                <strong>📖 什麼是 HTTP 封包？</strong><br>
+                HTTP 封包就像是一封信，包含了「請求內容」或「回應內容」，以及各種「標頭資訊」（Header）。了解封包結構是攻防的基礎！
+            </div>
+
+            <h3>🔹 HTTP 請求封包結構</h3>
+
+            <div class="http-packet">
+<code><span class="packet-header">━━━ 請求行 (Request Line) ━━━</span>
+<span class="method">POST</span> <span class="url">/login</span> HTTP/1.1
+
+<span class="packet-header">━━━ 請求標頭 (Request Headers) ━━━</span>
+<span class="header-key">Host:</span> <span class="header-val">example.com</span>
+<span class="header-key">User-Agent:</span> <span class="header-val">Mozilla/5.0 (Windows NT 10.0; Win64; x64)</span>
+<span class="header-key">Accept:</span> <span class="header-val">text/html,application/json</span>
+<span class="header-key">Accept-Language:</span> <span class="header-val">zh-TW,zh;q=0.9,en;q=0.8</span>
+<span class="header-key">Accept-Encoding:</span> <span class="header-val">gzip, deflate, br</span>
+<span class="header-key">Content-Type:</span> <span class="header-val">application/x-www-form-urlencoded</span>
+<span class="header-key">Content-Length:</span> <span class="header-val">27</span>
+<span class="header-key">Cookie:</span> <span class="header-val">session_id=abc123xyz</span>
+<span class="header-key">Connection:</span> <span class="header-val">keep-alive</span>
+
+<span class="packet-header">━━━ 請求主體 (Request Body) ━━━</span>
+username=admin&password=123</code>
+            </div>
+
+            <h3>🔹 重要的請求標頭</h3>
+
+            <div class="practice-area">
+                <table>
+                    <tr>
+                        <th style="width: 25%">標頭名稱</th>
+                        <th style="width: 35%">說明</th>
+                        <th style="width: 40%">範例</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Host</strong></td>
+                        <td>目標主機網域</td>
+                        <td>example.com</td>
+                    </tr>
+                    <tr>
+                        <td><strong>User-Agent</strong></td>
+                        <td>客戶端資訊（瀏覽器）</td>
+                        <td>Mozilla/5.0...</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cookie</strong></td>
+                        <td>網站儲存的資料</td>
+                        <td>session_id=abc123</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Referer</strong></td>
+                        <td>來源網址</td>
+                        <td>https://google.com</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Content-Type</strong></td>
+                        <td>請求內容的格式</td>
+                        <td>application/json</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Authorization</strong></td>
+                        <td>認證資訊</td>
+                        <td>Bearer token123...</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>🔹 HTTP 回應封包結構</h3>
+
+            <div class="http-packet">
+<code><span class="packet-header">━━━ 狀態行 (Status Line) ━━━</span>
+HTTP/1.1 <span class="status-code">200</span> OK
+
+<span class="packet-header">━━━ 回應標頭 (Response Headers) ━━━</span>
+<span class="header-key">Server:</span> <span class="header-val">nginx/1.18.0</span>
+<span class="header-key">Date:</span> <span class="header-val">Mon, 03 Nov 2025 10:30:00 GMT</span>
+<span class="header-key">Content-Type:</span> <span class="header-val">text/html; charset=UTF-8</span>
+<span class="header-key">Content-Length:</span> <span class="header-val">1234</span>
+<span class="header-key">Set-Cookie:</span> <span class="header-val">session_id=xyz789; HttpOnly; Secure</span>
+<span class="header-key">X-Frame-Options:</span> <span class="header-val">DENY</span>
+<span class="header-key">X-Content-Type-Options:</span> <span class="header-val">nosniff</span>
+<span class="header-key">Strict-Transport-Security:</span> <span class="header-val">max-age=31536000</span>
+
+<span class="packet-header">━━━ 回應主體 (Response Body) ━━━</span>
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;登入成功&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;&lt;h1&gt;歡迎回來！&lt;/h1&gt;&lt;/body&gt;
+&lt;/html&gt;</code>
+            </div>
+
+            <h3>🔹 重要的回應標頭</h3>
+
+            <div class="practice-area">
+                <table>
+                    <tr>
+                        <th style="width: 30%">標頭名稱</th>
+                        <th style="width: 35%">說明</th>
+                        <th style="width: 35%">安全性影響</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Set-Cookie</strong></td>
+                        <td>設定 Cookie</td>
+                        <td>應該加上 HttpOnly, Secure 屬性</td>
+                    </tr>
+                    <tr>
+                        <td><strong>X-Frame-Options</strong></td>
+                        <td>防止被嵌入 iframe</td>
+                        <td>防止點擊劫持攻擊</td>
+                    </tr>
+                    <tr>
+                        <td><strong>X-Content-Type-Options</strong></td>
+                        <td>禁止 MIME 類型嗅探</td>
+                        <td>防止 XSS 攻擊</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Content-Security-Policy</strong></td>
+                        <td>內容安全政策</td>
+                        <td>防止 XSS 和資料注入</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Strict-Transport-Security</strong></td>
+                        <td>強制使用 HTTPS</td>
+                        <td>防止中間人攻擊</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="demo-box">
+                <h4>🔍 互動練習：封包解析器</h4>
+                <p>貼上一個 HTTP 請求或回應封包，我們來分析它！</p>
+
+                <div class="input-group">
+                    <label>貼上 HTTP 封包：</label>
+                    <textarea id="packet_input" placeholder="貼上完整的 HTTP 封包...">POST /api/login HTTP/1.1
+Host: example.com
+User-Agent: Mozilla/5.0
+Content-Type: application/json
+Content-Length: 42
+
+{"username":"admin","password":"secret123"}</textarea>
+                </div>
+
+                <button class="btn" onclick="parsePacket()">🔍 解析封包</button>
+
+                <div class="result-box" id="packet_analysis">
+                    解析結果會顯示在這裡...
+                </div>
+            </div>
+
+            <h3>🔹 使用瀏覽器開發者工具查看封包</h3>
+
+            <div class="tip-box">
+                <strong>💡 如何查看真實的 HTTP 封包？</strong>
+                <ol>
+                    <li>按 <kbd>F12</kbd> 或 <kbd>Ctrl+Shift+I</kbd> 開啟開發者工具</li>
+                    <li>切換到「Network」（網路）標籤</li>
+                    <li>重新整理頁面或執行動作</li>
+                    <li>點擊任何請求查看詳細資訊</li>
+                    <li>可以看到 Headers、Payload、Response 等內容</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Tab 3: 重送封包 -->
+        <div id="tab3" class="content-section">
+            <h2>🔄 重送封包（Replay Attack）</h2>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ 什麼是重送封包攻擊？</strong><br>
+                攻擊者攔截合法的 HTTP 請求封包，然後重複發送這個封包來達到攻擊目的。例如：重複執行轉帳、重複投票、重複領取優惠等。
+                <span class="security-level medium-risk">中危險</span>
+            </div>
+
+            <h3>🔹 攻擊場景</h3>
+
+            <div class="practice-area">
+                <h4>常見的重送封包攻擊場景：</h4>
+                <ol>
+                    <li><strong>重複轉帳</strong>：攔截轉帳請求，重複發送造成多次扣款</li>
+                    <li><strong>重複投票</strong>：重送投票請求，灌票給特定選項</li>
+                    <li><strong>重複領取優惠</strong>：重送優惠券領取請求</li>
+                    <li><strong>繞過驗證</strong>：重送已驗證的請求來繞過檢查</li>
+                    <li><strong>session 劫持</strong>：重複使用別人的 session</li>
+                </ol>
+            </div>
+
+            <h3>🔹 攻擊示範</h3>
+
+            <div class="demo-box vulnerable-demo">
+                <h4>⚠️ 有漏洞的投票系統</h4>
+                <p>這個投票系統沒有防止重送攻擊...</p>
+
+                <div class="stats-box">
+                    <div class="stat-item">
+                        <div class="stat-value" id="vote_option1">0</div>
+                        <div class="stat-label">選項 A 票數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="vote_option2">0</div>
+                        <div class="stat-label">選項 B 票數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="vote_option3">0</div>
+                        <div class="stat-label">選項 C 票數</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>選擇你要投的選項：</label>
+                    <select id="vote_choice">
+                        <option value="A">選項 A</option>
+                        <option value="B">選項 B</option>
+                        <option value="C">選項 C</option>
+                    </select>
+                </div>
+
+                <button class="btn" onclick="voteVulnerable()">🗳️ 投票（正常）</button>
+                <button class="btn btn-danger" onclick="replayVoteAttack()">💥 重送攻擊（灌票）</button>
+                <button class="btn" onclick="resetVotes()">🔄 重置投票</button>
+
+                <div class="attack-console" id="vote_console">
+                    <div class="console-line info">💡 點擊按鈕開始測試...</div>
+                </div>
+
+                <div class="alert alert-danger">
+                    <strong>⚠️ 問題：</strong>這個系統沒有任何防護，可以無限重送請求！
+                </div>
+            </div>
+
+            <div class="demo-box safe-demo">
+                <h4>✅ 有防護的投票系統</h4>
+                <p>這個版本加入了 Token 驗證</p>
+
+                <div class="stats-box">
+                    <div class="stat-item">
+                        <div class="stat-value" id="safe_vote_option1">0</div>
+                        <div class="stat-label">選項 A 票數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="safe_vote_option2">0</div>
+                        <div class="stat-label">選項 B 票數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="safe_vote_option3">0</div>
+                        <div class="stat-label">選項 C 票數</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>選擇你要投的選項：</label>
+                    <select id="safe_vote_choice">
+                        <option value="A">選項 A</option>
+                        <option value="B">選項 B</option>
+                        <option value="C">選項 C</option>
+                    </select>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>🔑 當前 Token：</strong> <code id="current_token">尚未產生</code>
+                </div>
+
+                <button class="btn btn-success" onclick="voteSafe()">🗳️ 投票（有防護）</button>
+                <button class="btn btn-danger" onclick="replayVoteSafeAttack()">💥 嘗試重送攻擊</button>
+                <button class="btn" onclick="resetSafeVotes()">🔄 重置投票</button>
+
+                <div class="attack-console" id="safe_vote_console">
+                    <div class="console-line info">💡 點擊按鈕開始測試...</div>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>✅ 防護機制：</strong>
+                    <ul>
+                        <li>每次投票都需要新的 Token</li>
+                        <li>Token 只能使用一次</li>
+                        <li>重送舊的封包會被拒絕</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>🔹 防禦重送封包的方法</h3>
+
+            <div class="tip-box">
+                <strong>🛡️ 防護策略：</strong>
+
+                <h4>1️⃣ CSRF Token（跨站請求偽造令牌）</h4>
+                <div class="code-block">
+<code><span class="comment">&lt;!-- 在表單中加入 CSRF Token --&gt;</span>
+<span class="tag">&lt;form</span> <span class="attribute">action</span>=<span class="value">"/vote"</span> <span class="attribute">method</span>=<span class="value">"POST"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;input</span> <span class="attribute">type</span>=<span class="value">"hidden"</span> <span class="attribute">name</span>=<span class="value">"csrf_token"</span> 
+           <span class="attribute">value</span>=<span class="value">"隨機產生的Token"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;button</span> <span class="attribute">type</span>=<span class="value">"submit"</span><span class="tag">&gt;</span>投票<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="comment">// 伺服器驗證</span>
+<span class="keyword">if</span> (<span class="keyword">$_POST</span>[<span class="string">'csrf_token'</span>] !== <span class="keyword">$_SESSION</span>[<span class="string">'csrf_token'</span>]) {
+    <span class="keyword">die</span>(<span class="string">'Invalid token'</span>);
+}</code>
+                </div>
+
+                <h4>2️⃣ Nonce（一次性數字）</h4>
+                <div class="code-block">
+<code><span class="comment">// 產生唯一的 nonce</span>
+<span class="keyword">$nonce</span> = <span class="function">bin2hex</span>(<span class="function">random_bytes</span>(<span class="number">16</span>));
+<span class="keyword">$_SESSION</span>[<span class="string">'nonce'</span>] = <span class="keyword">$nonce</span>;
+
+<span class="comment">// 驗證並刪除（只能用一次）</span>
+<span class="keyword">if</span> (<span class="keyword">$_POST</span>[<span class="string">'nonce'</span>] === <span class="keyword">$_SESSION</span>[<span class="string">'nonce'</span>]) {
+    <span class="function">unset</span>(<span class="keyword">$_SESSION</span>[<span class="string">'nonce'</span>]);  <span class="comment">// 用完就刪除</span>
+    <span class="comment">// 處理請求...</span>
+} <span class="keyword">else</span> {
+    <span class="keyword">die</span>(<span class="string">'Invalid or expired nonce'</span>);
+}</code>
+                </div>
+
+                <h4>3️⃣ 時間戳記驗證</h4>
+                <div class="code-block">
+<code><span class="comment">// 檢查請求時間</span>
+<span class="keyword">$timestamp</span> = <span class="keyword">$_POST</span>[<span class="string">'timestamp'</span>];
+<span class="keyword">$current_time</span> = <span class="function">time</span>();
+
+<span class="comment">// 只接受 5 分鐘內的請求</span>
+<span class="keyword">if</span> ((<span class="keyword">$current_time</span> - <span class="keyword">$timestamp</span>) > <span class="number">300</span>) {
+    <span class="keyword">die</span>(<span class="string">'Request expired'</span>);
+}</code>
+                </div>
+
+                <h4>4️⃣ 記錄已處理的請求</h4>
+                <div class="code-block">
+<code><span class="comment">// 使用 Redis 記錄已處理的請求 ID</span>
+<span class="keyword">$request_id</span> = <span class="keyword">$_POST</span>[<span class="string">'request_id'</span>];
+
+<span class="keyword">if</span> (<span class="keyword">$redis</span>-><span class="function">exists</span>(<span class="string">"processed:$request_id"</span>)) {
+    <span class="keyword">die</span>(<span class="string">'Request already processed'</span>);
+}
+
+<span class="comment">// 處理請求後記錄</span>
+<span class="keyword">$redis</span>-><span class="function">setex</span>(<span class="string">"processed:$request_id"</span>, <span class="number">3600</span>, <span class="string">'1'</span>);  <span class="comment">// 1小時後過期</span></code>
+                </div>
+
+                <h4>5️⃣ SameSite Cookie 屬性</h4>
+                <div class="code-block">
+<code><span class="comment">// 設定 Cookie 時加上 SameSite 屬性</span>
+<span class="function">setcookie</span>(<span class="string">'session_id'</span>, <span class="keyword">$value</span>, [
+    <span class="string">'httponly'</span> => <span class="keyword">true</span>,
+    <span class="string">'secure'</span> => <span class="keyword">true</span>,
+    <span class="string">'samesite'</span> => <span class="string">'Strict'</span>  <span class="comment">// 防止跨站請求</span>
+]);</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: 暴力破解 -->
+        <div id="tab4" class="content-section">
+            <h2>💥 暴力破解攻擊（Brute Force Attack）</h2>
+
+            <div class="alert alert-danger">
+                <strong>🚨 什麼是暴力破解？</strong><br>
+                攻擊者使用<strong>字典檔</strong>（常見帳號、密碼清單）或<strong>窮舉法</strong>（嘗試所有可能組合），不斷嘗試登入直到成功。這是最常見也最有效的攻擊方式之一！
+                <span class="security-level high-risk">高危險</span>
+            </div>
+
+            <h3>🔹 攻擊原理</h3>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <strong>1️⃣ 準備字典檔</strong><br>
+                    收集常見的帳號和密碼清單
+                </div>
+                <div class="flow-arrow">⬇️</div>
+                <div class="flow-step">
+                    <strong>2️⃣ 自動化工具</strong><br>
+                    使用程式自動發送登入請求
+                </div>
+                <div class="flow-arrow">⬇️</div>
+                <div class="flow-step">
+                    <strong>3️⃣ 逐一嘗試</strong><br>
+                    測試字典檔中的每個帳號密碼組合
+                </div>
+                <div class="flow-arrow">⬇️</div>
+                <div class="flow-step">
+                    <strong>4️⃣ 成功登入</strong><br>
+                    找到正確的帳號密碼組合
+                </div>
+            </div>
+
+            <h3>🔹 常見的帳號字典檔</h3>
+
+            <div class="demo-box">
+                <h4>📝 常見帳號列表</h4>
+                <div class="dictionary-viewer" id="username_dict">
+                    <div class="dictionary-item" onclick="selectUsername('admin')">admin</div>
+                    <div class="dictionary-item" onclick="selectUsername('administrator')">administrator</div>
+                    <div class="dictionary-item" onclick="selectUsername('root')">root</div>
+                    <div class="dictionary-item" onclick="selectUsername('user')">user</div>
+                    <div class="dictionary-item" onclick="selectUsername('test')">test</div>
+                    <div class="dictionary-item" onclick="selectUsername('guest')">guest</div>
+                    <div class="dictionary-item" onclick="selectUsername('demo')">demo</div>
+                    <div class="dictionary-item" onclick="selectUsername('manager')">manager</div>
+                    <div class="dictionary-item" onclick="selectUsername('webmaster')">webmaster</div>
+                    <div class="dictionary-item" onclick="selectUsername('sysadmin')">sysadmin</div>
+                </div>
+            </div>
+
+            <h3>🔹 常見的密碼字典檔</h3>
+
+            <div class="demo-box">
+                <h4>🔑 常見密碼列表（台灣常用）</h4>
+                <div class="dictionary-viewer" id="password_dict">
+                    <div class="dictionary-item" onclick="selectPassword('123456')">123456</div>
+                    <div class="dictionary-item" onclick="selectPassword('password')">password</div>
+                    <div class="dictionary-item" onclick="selectPassword('12345678')">12345678</div>
+                    <div class="dictionary-item" onclick="selectPassword('qwerty')">qwerty</div>
+                    <div class="dictionary-item" onclick="selectPassword('abc123')">abc123</div>
+                    <div class="dictionary-item" onclick="selectPassword('password123')">password123</div>
+                    <div class="dictionary-item" onclick="selectPassword('admin')">admin</div>
+                    <div class="dictionary-item" onclick="selectPassword('letmein')">letmein</div>
+                    <div class="dictionary-item" onclick="selectPassword('welcome')">welcome</div>
+                    <div class="dictionary-item" onclick="selectPassword('monkey')">monkey</div>
+                    <div class="dictionary-item" onclick="selectPassword('1234567890')">1234567890</div>
+                    <div class="dictionary-item" onclick="selectPassword('a123456')">a123456</div>
+                </div>
+            </div>
+
+            <h3>🔹 暴力破解模擬器</h3>
+
+            <div class="demo-box vulnerable-demo">
+                <h4>⚠️ 無防護的登入系統</h4>
+                <p>這個系統沒有任何速率限制或驗證碼...</p>
+
+                <div class="alert alert-info">
+                    <strong>💡 目標帳號：</strong><code>admin</code><br>
+                    <strong>💡 目標密碼：</strong><code>password123</code>（在字典檔中）
+                </div>
+
+                <div class="input-group">
+                    <label>選擇攻擊模式：</label>
+                    <select id="attack_mode">
+                        <option value="smart">智慧模式（使用字典檔）</option>
+                        <option value="sequential">循序模式（依序嘗試）</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>攻擊速度：</label>
+                    <select id="attack_speed">
+                        <option value="100">快速（0.1秒/次）</option>
+                        <option value="500">中速（0.5秒/次）</option>
+                        <option value="1000">慢速（1秒/次）- 推薦觀看</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-danger" onclick="startBruteForce()" id="start_attack_btn">🚀 開始暴力破解</button>
+                <button class="btn btn-warning" onclick="stopBruteForce()" id="stop_attack_btn" disabled>⏹️ 停止攻擊</button>
+                <button class="btn" onclick="resetBruteForce()">🔄 重置</button>
+
+                <div class="stats-box" style="margin-top: 20px;">
+                    <div class="stat-item">
+                        <div class="stat-value" id="attempt_count">0</div>
+                        <div class="stat-label">嘗試次數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="success_count">0</div>
+                        <div class="stat-label">成功次數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="attack_time">0</div>
+                        <div class="stat-label">攻擊時間（秒）</div>
+                    </div>
+                </div>
+
+                <div class="timer" id="attack_timer">00:00:00</div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="attack_progress" style="width: 0%">0%</div>
+                </div>
+
+                <div class="attack-console" id="brute_force_console">
+                    <div class="console-line info">💡 點擊「開始暴力破解」查看攻擊過程...</div>
+                </div>
+            </div>
+
+            <h3>🔹 真實世界的暴力破解工具</h3>
+
+            <div class="practice-area">
+                <h4>⚠️ 常見的攻擊工具（僅供學習，不可用於非法用途）：</h4>
+                <table>
+                    <tr>
+                        <th style="width: 20%">工具名稱</th>
+                        <th style="width: 35%">功能</th>
+                        <th style="width: 45%">說明</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Hydra</strong></td>
+                        <td>多協定暴力破解</td>
+                        <td>支援 HTTP, SSH, FTP, RDP 等多種協定</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Burp Suite</strong></td>
+                        <td>Web 應用測試平台</td>
+                        <td>包含 Intruder 功能可進行暴力破解</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medusa</strong></td>
+                        <td>平行化暴力破解</td>
+                        <td>速度快，支援多執行緒</td>
+                    </tr>
+                    <tr>
+                        <td><strong>John the Ripper</strong></td>
+                        <td>密碼破解工具</td>
+                        <td>用於破解 hash 過的密碼</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hashcat</strong></td>
+                        <td>GPU 加速密碼破解</td>
+                        <td>使用顯示卡加速，速度極快</td>
+                    </tr>
+                </table>
+
+                <div class="alert alert-warning">
+                    <strong>⚠️ 法律警告：</strong><br>
+                    未經授權對他人系統進行暴力破解是<strong>違法行為</strong>，可能觸犯《刑法》妨害電腦使用罪。本教學僅供學習防護知識使用。
+                </div>
+            </div>
+
+            <h3>🔹 防禦暴力破解的方法</h3>
+
+            <div class="tip-box">
+                <strong>🛡️ 防護策略（多層防禦）：</strong>
+
+                <h4>1️⃣ 帳號鎖定機制</h4>
+                <div class="code-block">
+<code><span class="comment">// 失敗 5 次就鎖定 15 分鐘</span>
+<span class="keyword">$max_attempts</span> = <span class="number">5</span>;
+<span class="keyword">$lockout_time</span> = <span class="number">900</span>; <span class="comment">// 15分鐘</span>
+
+<span class="keyword">if</span> (<span class="keyword">$failed_attempts</span> >= <span class="keyword">$max_attempts</span>) {
+    <span class="keyword">$_SESSION</span>[<span class="string">'locked_until'</span>] = <span class="function">time</span>() + <span class="keyword">$lockout_time</span>;
+    <span class="keyword">die</span>(<span class="string">'帳號已鎖定，請 15 分鐘後再試'</span>);
+}</code>
+                </div>
+
+                <h4>2️⃣ 速率限制（Rate Limiting）</h4>
+                <div class="code-block">
+<code><span class="comment">// 每個 IP 每分鐘最多 10 次嘗試</span>
+<span class="keyword">$redis</span>-><span class="function">incr</span>(<span class="string">"login_attempts:$ip"</span>);
+<span class="keyword">$redis</span>-><span class="function">expire</span>(<span class="string">"login_attempts:$ip"</span>, <span class="number">60</span>);
+
+<span class="keyword">$attempts</span> = <span class="keyword">$redis</span>-><span class="function">get</span>(<span class="string">"login_attempts:$ip"</span>);
+<span class="keyword">if</span> (<span class="keyword">$attempts</span> > <span class="number">10</span>) {
+    <span class="keyword">die</span>(<span class="string">'請求過於頻繁，請稍後再試'</span>);
+}</code>
+                </div>
+
+                <h4>3️⃣ CAPTCHA 驗證碼</h4>
+                <div class="code-block">
+<code><span class="comment">// 失敗 3 次後要求驗證碼</span>
+<span class="keyword">if</span> (<span class="keyword">$failed_attempts</span> >= <span class="number">3</span>) {
+    <span class="comment">// 顯示 Google reCAPTCHA</span>
+    <span class="keyword">if</span> (!<span class="function">verify_recaptcha</span>(<span class="keyword">$_POST</span>[<span class="string">'g-recaptcha-response'</span>])) {
+        <span class="keyword">die</span>(<span class="string">'驗證碼錯誤'</span>);
+    }
+}</code>
+                </div>
+
+                <h4>4️⃣ 漸進式延遲</h4>
+                <div class="code-block">
+<code><span class="comment">// 每次失敗增加等待時間</span>
+<span class="keyword">$delay</span> = <span class="function">min</span>(<span class="keyword">$failed_attempts</span> * <span class="number">2</span>, <span class="number">30</span>); <span class="comment">// 最多30秒</span>
+<span class="function">sleep</span>(<span class="keyword">$delay</span>);</code>
+                </div>
+
+                <h4>5️⃣ 兩步驟驗證（2FA）</h4>
+                <div class="code-block">
+<code><span class="comment">// 即使密碼正確，還需要驗證 OTP</span>
+<span class="keyword">if</span> (<span class="function">verify_password</span>(<span class="keyword">$password</span>)) {
+    <span class="comment">// 要求輸入手機收到的驗證碼</span>
+    <span class="keyword">require</span> <span class="string">'otp_verification.php'</span>;
+}</code>
+                </div>
+
+                <h4>6️⃣ IP 黑名單</h4>
+                <div class="code-block">
+<code><span class="comment">// 將攻擊 IP 加入黑名單</span>
+<span class="keyword">if</span> (<span class="keyword">$failed_attempts</span> > <span class="number">20</span>) {
+    <span class="function">add_to_blacklist</span>(<span class="keyword">$ip</span>);
+    <span class="function">send_alert_to_admin</span>(<span class="string">"Possible brute force from $ip"</span>);
+}</code>
+                </div>
+            </div>
+
+            <div class="demo-box safe-demo">
+                <h4>✅ 有防護的登入系統演示</h4>
+                <p>嘗試登入，體驗各種防護機制</p>
+
+                <div class="input-group">
+                    <label>帳號：</label>
+                    <input type="text" id="protected_username" placeholder="試試：admin">
+                </div>
+
+                <div class="input-group">
+                    <label>密碼：</label>
+                    <input type="password" id="protected_password" placeholder="試試：wrongpass">
+                </div>
+
+                <div id="captcha_group" class="input-group" style="display: none;">
+                    <label>驗證碼（失敗3次後出現）：</label>
+                    <input type="text" id="captcha_input" placeholder="輸入驗證碼">
+                    <div style="background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 8px; text-align: center;">
+                        <span id="captcha_display" style="font-size: 2em; font-weight: bold; letter-spacing: 5px; color: #667eea;">ABCD</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" onclick="protectedLogin()" id="protected_login_btn">🔐 登入</button>
+
+                <div class="stats-box" style="margin-top: 20px;">
+                    <div class="stat-item">
+                        <div class="stat-value" id="protected_attempts">0</div>
+                        <div class="stat-label">失敗次數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="protected_remaining">∞</div>
+                        <div class="stat-label">剩餘嘗試次數</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="protected_delay">0</div>
+                        <div class="stat-label">下次延遲（秒）</div>
+                    </div>
+                </div>
+
+                <div class="result-box" id="protected_result">
+                    等待登入嘗試...
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>✅ 啟用的防護：</strong>
+                    <ul>
+                        <li>失敗 5 次鎖定帳號</li>
+                        <li>失敗 3 次要求驗證碼</li>
+                        <li>漸進式延遲（每次失敗增加等待時間）</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: 防護措施 -->
+        <div id="tab5" class="content-section">
+            <h2>🛡️ 綜合防護措施</h2>
+
+            <div class="alert alert-info">
+                <strong>📖 多層防禦策略</strong><br>
+                單一防護措施不夠，需要多層防禦來保護系統。結合各種技術和最佳實踐才能有效防止攻擊。
+            </div>
+
+            <h3>🔹 防護層級</h3>
+
+            <div class="practice-area">
+                <h4>🏰 七層防禦架構</h4>
+                <table>
+                    <tr>
+                        <th style="width: 20%">層級</th>
+                        <th style="width: 30%">防護措施</th>
+                        <th style="width: 50%">說明</th>
+                    </tr>
+                    <tr>
+                        <td><strong>網路層</strong></td>
+                        <td>防火牆、DDoS 防護</td>
+                        <td>阻擋惡意流量和 IP</td>
+                    </tr>
+                    <tr>
+                        <td><strong>應用層</strong></td>
+                        <td>WAF（Web 應用防火牆）</td>
+                        <td>偵測和阻擋常見的 Web 攻擊</td>
+                    </tr>
+                    <tr>
+                        <td><strong>認證層</strong></td>
+                        <td>多因素認證、強密碼政策</td>
+                        <td>確保使用者身份正確</td>
+                    </tr>
+                    <tr>
+                        <td><strong>傳輸層</strong></td>
+                        <td>HTTPS/TLS 加密</td>
+                        <td>保護資料傳輸安全</td>
+                    </tr>
+                    <tr>
+                        <td><strong>應用程式</strong></td>
+                        <td>輸入驗證、輸出編碼</td>
+                        <td>防止注入攻擊</td>
+                    </tr>
+                    <tr>
+                        <td><strong>資料層</strong></td>
+                        <td>加密儲存、存取控制</td>
+                        <td>保護敏感資料</td>
+                    </tr>
+                    <tr>
+                        <td><strong>監控層</strong></td>
+                        <td>日誌記錄、異常偵測</td>
+                        <td>及時發現和回應攻擊</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>🔹 完整的登入防護範例</h3>
+
+            <div class="demo-box">
+                <h4>💎 最佳實踐：安全登入系統</h4>
+                <div class="code-block">
+<code><span class="comment">// PHP 完整的安全登入範例</span>
+<span class="keyword">&lt;?php</span>
+<span class="function">session_start</span>();
+<span class="keyword">require</span> <span class="string">'db.php'</span>;
+
+<span class="comment">// 1. CSRF 保護</span>
+<span class="keyword">if</span> (<span class="keyword">$_POST</span>[<span class="string">'csrf_token'</span>] !== <span class="keyword">$_SESSION</span>[<span class="string">'csrf_token'</span>]) {
+    <span class="keyword">die</span>(<span class="string">'CSRF token mismatch'</span>);
+}
+
+<span class="comment">// 2. 速率限制檢查</span>
+<span class="keyword">$ip</span> = <span class="keyword">$_SERVER</span>[<span class="string">'REMOTE_ADDR'</span>];
+<span class="keyword">$attempts</span> = <span class="keyword">$redis</span>-><span class="function">get</span>(<span class="string">"login_attempts:$ip"</span>) ?? <span class="number">0</span>;
+
+<span class="keyword">if</span> (<span class="keyword">$attempts</span> > <span class="number">10</span>) {
+    <span class="function">http_response_code</span>(<span class="number">429</span>);
+    <span class="keyword">die</span>(<span class="string">'Too many requests'</span>);
+}
+
+<span class="comment">// 3. 帳號鎖定檢查</span>
+<span class="keyword">$username</span> = <span class="keyword">$_POST</span>[<span class="string">'username'</span>];
+<span class="keyword">$locked_until</span> = <span class="keyword">$redis</span>-><span class="function">get</span>(<span class="string">"locked:$username"</span>);
+
+<span class="keyword">if</span> (<span class="keyword">$locked_until</span> && <span class="function">time</span>() < <span class="keyword">$locked_until</span>) {
+    <span class="keyword">die</span>(<span class="string">'Account locked. Try again later.'</span>);
+}
+
+<span class="comment">// 4. 驗證碼檢查（失敗3次後）</span>
+<span class="keyword">$failed_count</span> = <span class="keyword">$redis</span>-><span class="function">get</span>(<span class="string">"failed:$username"</span>) ?? <span class="number">0</span>;
+<span class="keyword">if</span> (<span class="keyword">$failed_count</span> >= <span class="number">3</span>) {
+    <span class="keyword">if</span> (!<span class="function">verify_captcha</span>(<span class="keyword">$_POST</span>[<span class="string">'captcha'</span>])) {
+        <span class="keyword">die</span>(<span class="string">'Invalid captcha'</span>);
+    }
+}
+
+<span class="comment">// 5. 輸入驗證</span>
+<span class="keyword">$username</span> = <span class="function">filter_var</span>(<span class="keyword">$username</span>, FILTER_SANITIZE_STRING);
+<span class="keyword">$password</span> = <span class="keyword">$_POST</span>[<span class="string">'password'</span>];
+
+<span class="keyword">if</span> (<span class="function">strlen</span>(<span class="keyword">$username</span>) < <span class="number">3</span> || <span class="function">strlen</span>(<span class="keyword">$password</span>) < <span class="number">8</span>) {
+    <span class="keyword">die</span>(<span class="string">'Invalid input'</span>);
+}
+
+<span class="comment">// 6. 使用 Prepared Statement 查詢</span>
+<span class="keyword">$stmt</span> = <span class="keyword">$pdo</span>-><span class="function">prepare</span>(<span class="string">"SELECT * FROM users WHERE username = ?"</span>);
+<span class="keyword">$stmt</span>-><span class="function">execute</span>([<span class="keyword">$username</span>]);
+<span class="keyword">$user</span> = <span class="keyword">$stmt</span>-><span class="function">fetch</span>();
+
+<span class="comment">// 7. 驗證密碼（使用 bcrypt）</span>
+<span class="keyword">if</span> (<span class="keyword">$user</span> && <span class="function">password_verify</span>(<span class="keyword">$password</span>, <span class="keyword">$user</span>[<span class="string">'password_hash'</span>])) {
+    <span class="comment">// 登入成功</span>
+    <span class="keyword">$_SESSION</span>[<span class="string">'user_id'</span>] = <span class="keyword">$user</span>[<span class="string">'id'</span>];
+    
+    <span class="comment">// 清除失敗記錄</span>
+    <span class="keyword">$redis</span>-><span class="function">del</span>(<span class="string">"failed:$username"</span>);
+    <span class="keyword">$redis</span>-><span class="function">del</span>(<span class="string">"login_attempts:$ip"</span>);
+    
+    <span class="comment">// 重新產生 Session ID（防止 Session Fixation）</span>
+    <span class="function">session_regenerate_id</span>(<span class="keyword">true</span>);
+    
+    <span class="comment">// 記錄成功登入</span>
+    <span class="function">log_login_success</span>(<span class="keyword">$user</span>[<span class="string">'id'</span>], <span class="keyword">$ip</span>);
+    
+    <span class="function">header</span>(<span class="string">'Location: dashboard.php'</span>);
+} <span class="keyword">else</span> {
+    <span class="comment">// 登入失敗</span>
+    <span class="keyword">$failed_count</span>++;
+    <span class="keyword">$redis</span>-><span class="function">setex</span>(<span class="string">"failed:$username"</span>, <span class="number">3600</span>, <span class="keyword">$failed_count</span>);
+    
+    <span class="comment">// 增加 IP 嘗試次數</span>
+    <span class="keyword">$redis</span>-><span class="function">incr</span>(<span class="string">"login_attempts:$ip"</span>);
+    <span class="keyword">$redis</span>-><span class="function">expire</span>(<span class="string">"login_attempts:$ip"</span>, <span class="number">60</span>);
+    
+    <span class="comment">// 失敗 5 次鎖定帳號</span>
+    <span class="keyword">if</span> (<span class="keyword">$failed_count</span> >= <span class="number">5</span>) {
+        <span class="keyword">$redis</span>-><span class="function">setex</span>(<span class="string">"locked:$username"</span>, <span class="number">900</span>, <span class="function">time</span>() + <span class="number">900</span>);
+        <span class="function">send_alert</span>(<span class="keyword">$username</span>, <span class="string">'Account locked due to failed attempts'</span>);
+    }
+    
+    <span class="comment">// 漸進式延遲</span>
+    <span class="function">sleep</span>(<span class="function">min</span>(<span class="keyword">$failed_count</span>, <span class="number">5</span>));
+    
+    <span class="comment">// 記錄失敗嘗試</span>
+    <span class="function">log_login_failure</span>(<span class="keyword">$username</span>, <span class="keyword">$ip</span>);
+    
+    <span class="keyword">die</span>(<span class="string">'Invalid credentials'</span>);
+}
+<span class="keyword">?&gt;</span></code>
+                </div>
+            </div>
+
+            <h3>🔹 密碼安全最佳實踐</h3>
+
+            <div class="two-column">
+                <div class="comparison-item bad">
+                    <h4>❌ 不安全的密碼處理</h4>
+                    <div class="code-block">
+<code><span class="comment">// 明文儲存（極度危險！）</span>
+INSERT INTO users (password) 
+VALUES ('123456');
+
+<span class="comment">// 使用 MD5（已被破解）</span>
+<span class="keyword">$hash</span> = <span class="function">md5</span>(<span class="keyword">$password</span>);
+
+<span class="comment">// 沒有 salt 的 SHA1</span>
+<span class="keyword">$hash</span> = <span class="function">sha1</span>(<span class="keyword">$password</span>);</code>
+                    </div>
+                </div>
+
+                <div class="comparison-item good">
+                    <h4>✅ 安全的密碼處理</h4>
+                    <div class="code-block">
+<code><span class="comment">// 使用 bcrypt（推薦）</span>
+<span class="keyword">$hash</span> = <span class="function">password_hash</span>(
+    <span class="keyword">$password</span>, 
+    PASSWORD_BCRYPT,
+    [<span class="string">'cost'</span> => <span class="number">12</span>]
+);
+
+<span class="comment">// 驗證密碼</span>
+<span class="keyword">if</span> (<span class="function">password_verify</span>(<span class="keyword">$password</span>, <span class="keyword">$hash</span>)) {
+    <span class="comment">// 登入成功</span>
+}</code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>🔹 安全標頭設定</h3>
+
+            <div class="demo-box">
+                <h4>🔒 HTTP 安全標頭</h4>
+                <div class="code-block">
+<code><span class="comment">// PHP 設定安全標頭</span>
+<span class="comment">// 1. 防止點擊劫持</span>
+<span class="function">header</span>(<span class="string">'X-Frame-Options: DENY'</span>);
+
+<span class="comment">// 2. 防止 MIME 類型嗅探</span>
+<span class="function">header</span>(<span class="string">'X-Content-Type-Options: nosniff'</span>);
+
+<span class="comment">// 3. XSS 保護</span>
+<span class="function">header</span>(<span class="string">'X-XSS-Protection: 1; mode=block'</span>);
+
+<span class="comment">// 4. 強制 HTTPS</span>
+<span class="function">header</span>(<span class="string">'Strict-Transport-Security: max-age=31536000; includeSubDomains'</span>);
+
+<span class="comment">// 5. 內容安全政策</span>
+<span class="function">header</span>(<span class="string">"Content-Security-Policy: default-src 'self'; script-src 'self'"</span>);
+
+<span class="comment">// 6. Referrer 政策</span>
+<span class="function">header</span>(<span class="string">'Referrer-Policy: no-referrer-when-downgrade'</span>);
+
+<span class="comment">// 7. 權限政策</span>
+<span class="function">header</span>(<span class="string">'Permissions-Policy: geolocation=(), microphone=(), camera=()'</span>);</code>
+                </div>
+            </div>
+
+            <h3>🔹 監控和警報系統</h3>
+
+            <div class="practice-area">
+                <h4>📊 需要監控的指標：</h4>
+                <ul>
+                    <li><strong>登入失敗率</strong>：異常高的失敗率可能是暴力破解</li>
+                    <li><strong>請求頻率</strong>：短時間大量請求可能是攻擊</li>
+                    <li><strong>異常 IP</strong>：來自可疑地區或已知惡意 IP 的請求</li>
+                    <li><strong>錯誤率</strong>：異常的 400、500 錯誤</li>
+                    <li><strong>異常行為</strong>：深夜大量操作、爬取敏感資料等</li>
+                </ul>
+
+                <h4>🚨 警報機制：</h4>
+                <div class="code-block">
+<code><span class="comment">// 偵測異常並發送警報</span>
+<span class="keyword">if</span> (<span class="keyword">$failed_attempts_per_minute</span> > <span class="number">50</span>) {
+    <span class="function">send_alert</span>([
+        <span class="string">'type'</span> => <span class="string">'brute_force_detected'</span>,
+        <span class="string">'ip'</span> => <span class="keyword">$ip</span>,
+        <span class="string">'attempts'</span> => <span class="keyword">$failed_attempts_per_minute</span>,
+        <span class="string">'timestamp'</span> => <span class="function">date</span>(<span class="string">'Y-m-d H:i:s'</span>)
+    ]);
+    
+    <span class="comment">// 自動封鎖 IP</span>
+    <span class="function">add_to_blacklist</span>(<span class="keyword">$ip</span>, <span class="number">3600</span>); <span class="comment">// 封鎖 1 小時</span>
+}</code>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <strong>🎯 防護檢查清單：</strong>
+                <ul>
+                    <li>✅ 使用 HTTPS 加密傳輸</li>
+                    <li>✅ 實施速率限制</li>
+                    <li>✅ 加入 CAPTCHA 驗證</li>
+                    <li>✅ 帳號鎖定機制</li>
+                    <li>✅ 密碼強度要求</li>
+                    <li>✅ 多因素認證（2FA）</li>
+                    <li>✅ CSRF Token 保護</li>
+                    <li>✅ 安全的 Cookie 設定</li>
+                    <li>✅ 輸入驗證和輸出編碼</li>
+                    <li>✅ 日誌記錄和監控</li>
+                    <li>✅ 定期安全審計</li>
+                    <li>✅ 保持系統和套件更新</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tab 6: AI 時代防護 -->
+        <div id="tab6" class="content-section">
+            <h2>🤖 AI 時代的 HTTP 安全防護</h2>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ AI 產生程式碼的安全風險</strong><br>
+                當你使用 AI（ChatGPT、Claude、Copilot）產生 HTTP 相關的程式碼時，AI 可能會忽略重要的安全措施。你必須學會檢查和補強！
+            </div>
+
+            <h3>🔹 AI 常見的安全疏忽</h3>
+
+            <div class="comparison-box">
+                <div class="comparison-item bad">
+                    <h4>❌ AI 可能產生的不安全程式碼</h4>
+                    <div class="code-block">
+<code><span class="comment">// 範例：AI 產生的簡單登入</span>
+<span class="keyword">&lt;?php</span>
+<span class="keyword">$username</span> = <span class="keyword">$_POST</span>[<span class="string">'username'</span>];
+<span class="keyword">$password</span> = <span class="keyword">$_POST</span>[<span class="string">'password'</span>];
+
+<span class="comment">// 問題 1：SQL Injection 漏洞</span>
+<span class="keyword">$query</span> = <span class="string">"SELECT * FROM users 
+          WHERE username='$username' 
+          AND password='$password'"</span>;
+
+<span class="comment">// 問題 2：明文儲存密碼</span>
+<span class="comment">// 問題 3：沒有速率限制</span>
+<span class="comment">// 問題 4：沒有 CSRF 保護</span>
+<span class="comment">// 問題 5：沒有輸入驗證</span>
+
+<span class="keyword">if</span> (<span class="function">mysqli_num_rows</span>(<span class="keyword">$result</span>) > <span class="number">0</span>) {
+    <span class="keyword">echo</span> <span class="string">"登入成功"</span>;
+}
+<span class="keyword">?&gt;</span></code>
+                    </div>
+                </div>
+
+                <div class="comparison-item good">
+                    <h4>✅ 要求 AI 產生安全的程式碼</h4>
+                    <div class="code-block">
+<code><span class="comment">// 正確的安全登入</span>
+<span class="keyword">&lt;?php</span>
+<span class="function">session_start</span>();
+
+<span class="comment">// 1. CSRF 檢查</span>
+<span class="keyword">if</span> (<span class="keyword">$_POST</span>[<span class="string">'token'</span>] !== <span class="keyword">$_SESSION</span>[<span class="string">'token'</span>]) {
+    <span class="keyword">die</span>(<span class="string">'CSRF detected'</span>);
+}
+
+<span class="comment">// 2. 速率限制</span>
+<span class="function">check_rate_limit</span>(<span class="keyword">$_SERVER</span>[<span class="string">'REMOTE_ADDR'</span>]);
+
+<span class="comment">// 3. 輸入驗證</span>
+<span class="keyword">$username</span> = <span class="function">filter_input</span>(
+    INPUT_POST, <span class="string">'username'</span>, 
+    FILTER_SANITIZE_STRING
+);
+
+<span class="comment">// 4. Prepared Statement</span>
+<span class="keyword">$stmt</span> = <span class="keyword">$pdo</span>-><span class="function">prepare</span>(
+    <span class="string">"SELECT * FROM users WHERE username = ?"</span>
+);
+<span class="keyword">$stmt</span>-><span class="function">execute</span>([<span class="keyword">$username</span>]);
+
+<span class="comment">// 5. 密碼驗證（bcrypt）</span>
+<span class="keyword">if</span> (<span class="function">password_verify</span>(<span class="keyword">$password</span>, <span class="keyword">$hash</span>)) {
+    <span class="comment">// 登入成功</span>
+}
+<span class="keyword">?&gt;</span></code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>🔹 如何與 AI 溝通才安全</h3>
+
+            <div class="demo-box">
+                <h4>✨ 好的提示詞範例</h4>
+
+                <div class="alert alert-success">
+                    <strong>👍 詳細且安全的要求：</strong>
+                    <p>「請幫我寫一個 PHP 登入功能，需要包含以下安全措施：</p>
+                    <ul>
+                        <li>使用 PDO Prepared Statement 防止 SQL Injection</li>
+                        <li>密碼使用 bcrypt 雜湊</li>
+                        <li>加入 CSRF Token 驗證</li>
+                        <li>實作速率限制（每 IP 每分鐘最多 5 次）</li>
+                        <li>失敗 3 次後要求 CAPTCHA</li>
+                        <li>失敗 5 次鎖定帳號 15 分鐘</li>
+                        <li>記錄所有登入嘗試到日誌</li>
+                    </ul>
+                    <p>請提供完整的程式碼和說明。」</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>👍 要求審查現有程式碼：</strong>
+                    <p>「請檢查以下程式碼的安全性，特別注意：</p>
+                    <ul>
+                        <li>SQL Injection 漏洞</li>
+                        <li>XSS 漏洞</li>
+                        <li>CSRF 漏洞</li>
+                        <li>暴力破解防護</li>
+                        <li>敏感資料處理</li>
+                    </ul>
+                    <p>如果有問題，請說明並提供修正建議。</p>
+                    <p>[貼上程式碼]」</p>
+                </div>
+
+                <div class="alert alert-danger">
+                    <strong>👎 不好的要求：</strong>
+                    <p>「寫一個登入系統」（太簡略，AI 會用最簡單但不安全的方式）</p>
+                </div>
+            </div>
+
+            <h3>🔹 AI 程式碼安全檢查清單</h3>
+
+            <div class="practice-area">
+                <h4>📋 拿到 AI 程式碼後必須檢查：</h4>
+
+                <table>
+                    <tr>
+                        <th style="width: 25%">檢查項目</th>
+                        <th style="width: 35%">❌ 危險信號</th>
+                        <th style="width: 40%">✅ 安全信號</th>
+                    </tr>
+                    <tr>
+                        <td><strong>資料庫查詢</strong></td>
+                        <td>
+                            字串拼接 SQL<br>
+                            <code>$sql = "... WHERE id=$id"</code>
+                        </td>
+                        <td>
+                            使用 Prepared Statement<br>
+                            <code>$stmt->execute([$id])</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>密碼處理</strong></td>
+                        <td>
+                            MD5, SHA1, 明文儲存<br>
+                            沒有 salt
+                        </td>
+                        <td>
+                            bcrypt, Argon2<br>
+                            <code>password_hash()</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>CSRF 防護</strong></td>
+                        <td>
+                            沒有 Token 驗證<br>
+                            直接處理 POST 請求
+                        </td>
+                        <td>
+                            驗證 CSRF Token<br>
+                            SameSite Cookie
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>速率限制</strong></td>
+                        <td>
+                            無限次嘗試<br>
+                            沒有延遲機制
+                        </td>
+                        <td>
+                            限制請求頻率<br>
+                            帳號鎖定機制
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>輸入驗證</strong></td>
+                        <td>
+                            直接使用 $_POST<br>
+                            沒有過濾和驗證
+                        </td>
+                        <td>
+                            filter_input()<br>
+                            格式和長度檢查
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>錯誤處理</strong></td>
+                        <td>
+                            顯示詳細錯誤<br>
+                            洩漏系統資訊
+                        </td>
+                        <td>
+                            通用錯誤訊息<br>
+                            記錄到日誌
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Session 管理</strong></td>
+                        <td>
+                            預設 Session 設定<br>
+                            沒有 regenerate
+                        </td>
+                        <td>
+                            安全的 Session 設定<br>
+                            登入後重新產生 ID
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>🔹 使用 AI 輔助安全測試</h3>
+
+            <div class="demo-box">
+                <h4>🔍 讓 AI 幫你找漏洞</h4>
+
+                <div class="alert alert-info">
+                    <strong>💡 可以請 AI 幫你：</strong>
+                </div>
+
+                <div class="code-block">
+<code><span class="comment">// 提示詞範例 1：生成測試案例</span>
+"請為這個登入功能生成安全測試案例，包含：
+- SQL Injection 測試
+- XSS 測試
+- 暴力破解測試
+- CSRF 測試
+請提供具體的測試輸入和預期結果。"
+
+<span class="comment">// 提示詞範例 2：分析攻擊面</span>
+"請分析這個 API 的潛在攻擊面：
+[貼上 API 程式碼]
+特別關注：
+1. 認證和授權漏洞
+2. 輸入驗證問題
+3. 速率限制
+4. 資料洩漏風險"
+
+<span class="comment">// 提示詞範例 3：產生模糊測試資料</span>
+"請產生 100 個測試用的惡意輸入範例，
+用於測試表單輸入的安全性，包含：
+- SQL Injection payloads
+- XSS payloads
+- 特殊字元組合
+- 超長字串"</code>
+                </div>
+            </div>
+
+            <h3>🔹 推薦的 AI 輔助安全工具</h3>
+
+            <div class="practice-area">
+                <h4>🛠️ 結合 AI 的安全工具：</h4>
+                <ol>
+                    <li><strong>GitHub Copilot</strong>
+                        <ul>
+                            <li>程式碼自動完成</li>
+                            <li>記得檢查生成的程式碼安全性</li>
+                        </ul>
+                    </li>
+                    <li><strong>Snyk Code</strong>
+                        <ul>
+                            <li>AI 驅動的程式碼安全掃描</li>
+                            <li>即時發現漏洞</li>
+                        </ul>
+                    </li>
+                    <li><strong>Tabnine</strong>
+                        <ul>
+                            <li>AI 程式碼建議</li>
+                            <li>支援多種語言</li>
+                        </ul>
+                    </li>
+                    <li><strong>SonarQube</strong>
+                        <ul>
+                            <li>靜態程式碼分析</li>
+                            <li>偵測安全漏洞和程式碼異味</li>
+                        </ul>
+                    </li>
+                    <li><strong>OWASP ZAP</strong>
+                        <ul>
+                            <li>自動化安全測試</li>
+                            <li>可配合 AI 生成測試案例</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="tip-box">
+                <strong>🎯 AI 時代的安全開發建議：</strong>
+                <ol>
+                    <li><strong>明確要求安全性</strong>：在 prompt 中詳細說明安全需求</li>
+                    <li><strong>永遠審查程式碼</strong>：不要盲目信任 AI 生成的程式碼</li>
+                    <li><strong>使用檢查清單</strong>：系統性檢查每個安全要點</li>
+                    <li><strong>自動化測試</strong>：建立安全測試流程</li>
+                    <li><strong>持續學習</strong>：了解最新的攻擊手法和防護技術</li>
+                    <li><strong>多層防禦</strong>：不依賴單一防護措施</li>
+                    <li><strong>定期審計</strong>：定期檢查系統安全性</li>
+                    <li><strong>保持更新</strong>：及時修補已知漏洞</li>
+                </ol>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>📚 延伸學習資源：</strong>
+                <ul>
+                    <li><strong>OWASP Top 10</strong> - 最常見的 Web 安全風險</li>
+                    <li><strong>OWASP API Security Top 10</strong> - API 安全指南</li>
+                    <li><strong>CWE Top 25</strong> - 最危險的軟體弱點</li>
+                    <li><strong>NIST Cybersecurity Framework</strong> - 網路安全框架</li>
+                    <li><strong>HackerOne / Bugcrowd</strong> - 漏洞賞金平台（學習真實案例）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab 切換
+        function showTab(tabId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Tab 1: HTTP 請求模擬
+        document.getElementById('http_method').addEventListener('change', function() {
+            const method = this.value;
+            if (method === 'GET' || method === 'DELETE') {
+                document.getElementById('query_params_group').style.display = 'block';
+                document.getElementById('body_params_group').style.display = 'none';
+            } else {
+                document.getElementById('query_params_group').style.display = 'none';
+                document.getElementById('body_params_group').style.display = 'block';
+            }
+        });
+
+        function simulateHTTPRequest() {
+            const method = document.getElementById('http_method').value;
+            const path = document.getElementById('http_path').value;
+            const queryParams = document.getElementById('query_params').value;
+            const bodyParams = document.getElementById('body_params').value;
+
+            let requestPacket = `<span class="method">${method}</span> <span class="url">${path}`;
+            
+            if ((method === 'GET' || method === 'DELETE') && queryParams) {
+                requestPacket += `?${queryParams}`;
+            }
+            
+            requestPacket += `</span> HTTP/1.1\n`;
+            requestPacket += `<span class="header-key">Host:</span> <span class="header-val">example.com</span>\n`;
+            requestPacket += `<span class="header-key">User-Agent:</span> <span class="header-val">Mozilla/5.0</span>\n`;
+            requestPacket += `<span class="header-key">Accept:</span> <span class="header-val">application/json</span>\n`;
+
+            if (method === 'POST' || method === 'PUT') {
+                requestPacket += `<span class="header-key">Content-Type:</span> <span class="header-val">application/json</span>\n`;
+                requestPacket += `<span class="header-key">Content-Length:</span> <span class="header-val">${bodyParams.length}</span>\n`;
+                requestPacket += `\n${bodyParams}`;
+            }
+
+            document.getElementById('request_packet').innerHTML = requestPacket;
+
+            // 模擬回應
+            setTimeout(() => {
+                let responsePacket = `HTTP/1.1 <span class="status-code">200</span> OK\n`;
+                responsePacket += `<span class="header-key">Server:</span> <span class="header-val">nginx/1.18.0</span>\n`;
+                responsePacket += `<span class="header-key">Content-Type:</span> <span class="header-val">application/json</span>\n`;
+                responsePacket += `<span class="header-key">Date:</span> <span class="header-val">${new Date().toUTCString()}</span>\n`;
+                responsePacket += `\n{"status": "success", "message": "Request processed"}`;
+
+                document.getElementById('response_packet').innerHTML = responsePacket;
+            }, 500);
+        }
+
+        // Tab 2: 封包解析
+        function parsePacket() {
+            const packet = document.getElementById('packet_input').value;
+            const lines = packet.split('\n');
+            const resultDiv = document.getElementById('packet_analysis');
+
+            if (lines.length === 0) {
+                resultDiv.innerHTML = '<p style="color: #ff4444;">請輸入封包內容</p>';
+                return;
+            }
+
+            let html = '<h4>📊 封包分析結果：</h4>';
+
+            // 解析第一行（請求行或狀態行）
+            const firstLine = lines[0].trim();
+            if (firstLine.startsWith('HTTP')) {
+                // 回應封包
+                const parts = firstLine.split(' ');
+                html += `<p><strong>類型：</strong>HTTP 回應</p>`;
+                html += `<p><strong>協定版本：</strong>${parts[0]}</p>`;
+                html += `<p><strong>狀態碼：</strong><span class="badge badge-200">${parts[1]}</span></p>`;
+                html += `<p><strong>狀態訊息：</strong>${parts.slice(2).join(' ')}</p>`;
+            } else {
+                // 請求封包
+                const parts = firstLine.split(' ');
+                html += `<p><strong>類型：</strong>HTTP 請求</p>`;
+                html += `<p><strong>方法：</strong><span class="badge badge-${parts[0].toLowerCase()}">${parts[0]}</span></p>`;
+                html += `<p><strong>路徑：</strong><code>${parts[1]}</code></p>`;
+                html += `<p><strong>協定版本：</strong>${parts[2]}</p>`;
+            }
+
+            // 解析標頭
+            html += '<h4 style="margin-top: 20px;">標頭資訊：</h4><ul>';
+            let bodyStarted = false;
+            let body = '';
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line === '') {
+                    bodyStarted = true;
+                    continue;
+                }
+
+                if (bodyStarted) {
+                    body += line + '\n';
+                } else if (line.includes(':')) {
+                    const [key, ...valueParts] = line.split(':');
+                    const value = valueParts.join(':').trim();
+                    html += `<li><strong>${key}:</strong> ${value}</li>`;
+                }
+            }
+            html += '</ul>';
+
+            // 顯示 Body
+            if (body) {
+                html += '<h4 style="margin-top: 20px;">主體內容：</h4>';
+                html += `<div class="code-block"><code>${escapeHtml(body)}</code></div>`;
+            }
+
+            resultDiv.innerHTML = html;
+            resultDiv.className = 'result-box safe';
+        }
+
+        // Tab 3: 投票系統
+        let votes = { A: 0, B: 0, C: 0 };
+        let safeVotes = { A: 0, B: 0, C: 0 };
+        let lastVoteToken = null;
+        let currentToken = generateToken();
+
+        function generateToken() {
+            return Math.random().toString(36).substring(2, 15);
+        }
+
+        function voteVulnerable() {
+            const choice = document.getElementById('vote_choice').value;
+            votes[choice]++;
+            updateVoteDisplay();
+            
+            const console = document.getElementById('vote_console');
+            console.innerHTML += `<div class="console-line success">✅ 投票成功：選項 ${choice}</div>`;
+        }
+
+        function replayVoteAttack() {
+            const choice = document.getElementById('vote_choice').value;
+            const console = document.getElementById('vote_console');
+            console.innerHTML = '<div class="console-line error">🚨 開始重送攻擊...</div>';
+            
+            let count = 0;
+            const interval = setInterval(() => {
+                votes[choice]++;
+                updateVoteDisplay();
+                count++;
+                console.innerHTML += `<div class="console-line warning">💥 重送封包 #${count}：選項 ${choice} +1 票</div>`;
+                
+                if (count >= 10) {
+                    clearInterval(interval);
+                    console.innerHTML += '<div class="console-line error">⚠️ 攻擊完成！成功灌了 10 票，系統沒有任何防護！</div>';
+                }
+            }, 100);
+        }
+
+        function resetVotes() {
+            votes = { A: 0, B: 0, C: 0 };
+            updateVoteDisplay();
+            document.getElementById('vote_console').innerHTML = '<div class="console-line info">💡 投票已重置</div>';
+        }
+
+        function updateVoteDisplay() {
+            document.getElementById('vote_option1').textContent = votes.A;
+            document.getElementById('vote_option2').textContent = votes.B;
+            document.getElementById('vote_option3').textContent = votes.C;
+        }
+
+        // 安全投票
+        function voteSafe() {
+            const choice = document.getElementById('safe_vote_choice').value;
+            safeVotes[choice]++;
+            updateSafeVoteDisplay();
+            
+            lastVoteToken = currentToken;
+            currentToken = generateToken();
+            document.getElementById('current_token').textContent = currentToken;
+            
+            const console = document.getElementById('safe_vote_console');
+            console.innerHTML += `<div class="console-line success">✅ 投票成功：選項 ${choice}</div>`;
+            console.innerHTML += `<div class="console-line info">🔑 Token 已使用，新 Token 已產生</div>`;
+        }
+
+        function replayVoteSafeAttack() {
+            const choice = document.getElementById('safe_vote_choice').value;
+            const console = document.getElementById('safe_vote_console');
+            console.innerHTML = '<div class="console-line error">🚨 嘗試重送攻擊...</div>';
+            
+            setTimeout(() => {
+                console.innerHTML += `<div class="console-line warning">💥 使用舊的 Token: ${lastVoteToken}</div>`;
+            }, 500);
+
+            setTimeout(() => {
+                console.innerHTML += '<div class="console-line error">❌ 攻擊失敗！Token 無效（已被使用）</div>';
+                console.innerHTML += '<div class="console-line success">🛡️ 防護機制成功阻擋了重送攻擊！</div>';
+            }, 1000);
+        }
+
+        function resetSafeVotes() {
+            safeVotes = { A: 0, B: 0, C: 0 };
+            updateSafeVoteDisplay();
+            currentToken = generateToken();
+            document.getElementById('current_token').textContent = currentToken;
+            document.getElementById('safe_vote_console').innerHTML = '<div class="console-line info">💡 投票已重置，新 Token 已產生</div>';
+        }
+
+        function updateSafeVoteDisplay() {
+            document.getElementById('safe_vote_option1').textContent = safeVotes.A;
+            document.getElementById('safe_vote_option2').textContent = safeVotes.B;
+            document.getElementById('safe_vote_option3').textContent = safeVotes.C;
+        }
+
+        // Tab 4: 暴力破解
+        const usernames = ['admin', 'administrator', 'root', 'user', 'test', 'guest', 'demo', 'manager'];
+        const passwords = ['123456', 'password', '12345678', 'qwerty', 'abc123', 'password123', 'admin', 'letmein'];
+        
+        const targetUsername = 'admin';
+        const targetPassword = 'password123';
+        
+        let bruteForceInterval = null;
+        let attemptCount = 0;
+        let successCount = 0;
+        let startTime = null;
+        let timerInterval = null;
+
+        function selectUsername(username) {
+            console.log('Selected username:', username);
+        }
+
+        function selectPassword(password) {
+            console.log('Selected password:', password);
+        }
+
+        function startBruteForce() {
+            const mode = document.getElementById('attack_mode').value;
+            const speed = parseInt(document.getElementById('attack_speed').value);
+            
+            attemptCount = 0;
+            successCount = 0;
+            startTime = Date.now();
+            
+            document.getElementById('start_attack_btn').disabled = true;
+            document.getElementById('stop_attack_btn').disabled = false;
+            
+            const console = document.getElementById('brute_force_console');
+            console.innerHTML = '<div class="console-line info">🚀 暴力破解攻擊開始...</div>';
+            console.innerHTML += `<div class="console-line info">📊 模式：${mode === 'smart' ? '智慧字典' : '循序嘗試'}</div>`;
+            console.innerHTML += `<div class="console-line info">⏱️ 速度：${speed}ms/次</div>`;
+            console.innerHTML += '<div class="console-line warning">━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>';
+            
+            startTimer();
+            
+            let userIdx = 0;
+            let passIdx = 0;
+            const totalCombinations = usernames.length * passwords.length;
+            
+            bruteForceInterval = setInterval(() => {
+                const username = usernames[userIdx];
+                const password = passwords[passIdx];
+                
+                attemptCount++;
+                
+                const success = (username === targetUsername && password === targetPassword);
+                
+                if (success) {
+                    successCount++;
+                    console.innerHTML += `<div class="console-line success">🎯 成功！找到正確組合：${username} / ${password}</div>`;
+                    stopBruteForce();
+                    return;
+                } else {
+                    console.innerHTML += `<div class="console-line error">❌ 失敗：${username} / ${password}</div>`;
+                }
+                
+                // 更新進度
+                const progress = (attemptCount / totalCombinations) * 100;
+                document.getElementById('attack_progress').style.width = progress + '%';
+                document.getElementById('attack_progress').textContent = Math.round(progress) + '%';
+                
+                // 更新統計
+                document.getElementById('attempt_count').textContent = attemptCount;
+                document.getElementById('success_count').textContent = successCount;
+                
+                // 捲動到最底部
+                console.scrollTop = console.scrollHeight;
+                
+                // 下一個組合
+                passIdx++;
+                if (passIdx >= passwords.length) {
+                    passIdx = 0;
+                    userIdx++;
+                    if (userIdx >= usernames.length) {
+                        console.innerHTML += '<div class="console-line warning">⚠️ 所有組合都嘗試過了，未找到正確密碼</div>';
+                        stopBruteForce();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopBruteForce() {
+            if (bruteForceInterval) {
+                clearInterval(bruteForceInterval);
+                bruteForceInterval = null;
+            }
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            document.getElementById('start_attack_btn').disabled = false;
+            document.getElementById('stop_attack_btn').disabled = true;
+            
+            const console = document.getElementById('brute_force_console');
+            console.innerHTML += '<div class="console-line warning">━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>';
+            console.innerHTML += '<div class="console-line info">⏹️ 攻擊已停止</div>';
+        }
+
+        function resetBruteForce() {
+            stopBruteForce();
+            attemptCount = 0;
+            successCount = 0;
+            document.getElementById('attempt_count').textContent = '0';
+            document.getElementById('success_count').textContent = '0';
+            document.getElementById('attack_time').textContent = '0';
+            document.getElementById('attack_timer').textContent = '00:00:00';
+            document.getElementById('attack_progress').style.width = '0%';
+            document.getElementById('attack_progress').textContent = '0%';
+            document.getElementById('brute_force_console').innerHTML = '<div class="console-line info">💡 點擊「開始暴力破解」查看攻擊過程...</div>';
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('attack_time').textContent = elapsed;
+                
+                const hours = Math.floor(elapsed / 3600);
+                const minutes = Math.floor((elapsed % 3600) / 60);
+                const seconds = elapsed % 60;
+                
+                document.getElementById('attack_timer').textContent = 
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        // 有防護的登入
+        let protectedAttempts = 0;
+        let protectedDelay = 0;
+        let captchaRequired = false;
+        let isLocked = false;
+        let currentCaptcha = generateCaptcha();
+
+        function generateCaptcha() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let captcha = '';
+            for (let i = 0; i < 4; i++) {
+                captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return captcha;
+        }
+
+        function protectedLogin() {
+            if (isLocked) {
+                const result = document.getElementById('protected_result');
+                result.className = 'result-box vulnerable';
+                result.innerHTML = '<p style="color: #ff4444;">🔒 帳號已被鎖定！請等待 15 分鐘後再試</p>';
+                return;
+            }
+
+            // 模擬延遲
+            if (protectedDelay > 0) {
+                document.getElementById('protected_login_btn').disabled = true;
+                setTimeout(() => {
+                    document.getElementById('protected_login_btn').disabled = false;
+                    attemptLogin();
+                }, protectedDelay * 1000);
+                
+                const result = document.getElementById('protected_result');
+                result.className = 'result-box';
+                result.innerHTML = `<p style="color: #ffa726;">⏳ 請等待 ${protectedDelay} 秒...</p>`;
+            } else {
+                attemptLogin();
+            }
+        }
+
+        function attemptLogin() {
+            const username = document.getElementById('protected_username').value;
+            const password = document.getElementById('protected_password').value;
+            const result = document.getElementById('protected_result');
+
+            // 檢查驗證碼
+            if (captchaRequired) {
+                const captchaInput = document.getElementById('captcha_input').value.toUpperCase();
+                if (captchaInput !== currentCaptcha) {
+                    result.className = 'result-box vulnerable';
+                    result.innerHTML = '<p style="color: #ff4444;">❌ 驗證碼錯誤！</p>';
+                    currentCaptcha = generateCaptcha();
+                    document.getElementById('captcha_display').textContent = currentCaptcha;
+                    return;
+                }
+            }
+
+            // 檢查帳號密碼
+            if (username === 'admin' && password === 'secret123') {
+                result.className = 'result-box safe';
+                result.innerHTML = '<p style="color: #00c853;">✅ 登入成功！</p>';
+                protectedAttempts = 0;
+                captchaRequired = false;
+                document.getElementById('captcha_group').style.display = 'none';
+                updateProtectedStats();
+            } else {
+                protectedAttempts++;
+                protectedDelay = Math.min(protectedAttempts * 2, 10);
+                
+                result.className = 'result-box vulnerable';
+                result.innerHTML = `<p style="color: #ff4444;">❌ 登入失敗！（第 ${protectedAttempts} 次）</p>`;
+
+                // 失敗 3 次要求驗證碼
+                if (protectedAttempts >= 3 && !captchaRequired) {
+                    captchaRequired = true;
+                    document.getElementById('captcha_group').style.display = 'block';
+                    document.getElementById('captcha_display').textContent = currentCaptcha;
+                    result.innerHTML += '<p style="color: #ffa726;">⚠️ 失敗次數過多，請輸入驗證碼</p>';
+                }
+
+                // 失敗 5 次鎖定
+                if (protectedAttempts >= 5) {
+                    isLocked = true;
+                    result.innerHTML += '<p style="color: #ff4444;">🔒 帳號已鎖定 15 分鐘！</p>';
+                    
+                    // 15 秒後解鎖（演示用，實際應該是 15 分鐘）
+                    setTimeout(() => {
+                        isLocked = false;
+                        protectedAttempts = 0;
+                        protectedDelay = 0;
+                        captchaRequired = false;
+                        document.getElementById('captcha_group').style.display = 'none';
+                        updateProtectedStats();
+                        
+                        const result = document.getElementById('protected_result');
+                        result.className = 'result-box';
+                        result.innerHTML = '<p style="color: #00c853;">🔓 帳號已解鎖</p>';
+                    }, 15000);
+                }
+
+                updateProtectedStats();
+            }
+        }
+
+        function updateProtectedStats() {
+            document.getElementById('protected_attempts').textContent = protectedAttempts;
+            document.getElementById('protected_remaining').textContent = isLocked ? '0' : Math.max(0, 5 - protectedAttempts);
+            document.getElementById('protected_delay').textContent = protectedDelay;
+        }
+
+        function replayVoteSafeAttack() {
+            const console = document.getElementById('safe_vote_console');
+            console.innerHTML += '<div class="console-line warning">🚨 嘗試重送舊的請求封包...</div>';
+            setTimeout(() => {
+                console.innerHTML += '<div class="console-line error">❌ 攻擊被阻擋！Token 已失效</div>';
+            }, 1000);
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // 初始化
+        window.onload = function() {
+            console.log('HTTP 安全教學系統已載入');
+            document.getElementById('current_token').textContent = currentToken;
+            updateProtectedStats();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+flag{You_find_the_tmp_in_dirb}

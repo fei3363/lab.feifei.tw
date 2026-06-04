@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第二課：SQL Injection 入門</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚠️ 第二課：SQL Injection 入門</h1>
+            <p class="subtitle">理解字串拼接的危險性，學習 SQL 注入攻擊原理</p>
+        </header>
+
+        <div class="nav-bar">
+            <a href="index.html" class="nav-btn">🏠 回首頁</a>
+            <a href="page1-crud.html" class="nav-btn">⬅️ 上一課</a>
+            <a href="page3-numeric-injection.html" class="nav-btn">下一課 ➡️</a>
+        </div>
+
+        <div class="danger-box">
+            <h3>🚨 什麼是 SQL Injection？</h3>
+            <p><strong>SQL Injection (SQL 注入)</strong> 是一種網路攻擊手法，攻擊者透過輸入特殊字元，改變原本的 SQL 指令邏輯，進而：</p>
+            <ul>
+                <li>🔓 繞過登入驗證</li>
+                <li>📊 竊取資料庫資料</li>
+                <li>🗑️ 刪除或修改資料</li>
+                <li>💀 甚至控制整個資料庫</li>
+            </ul>
+        </div>
+
+        <!-- 步驟指示器 -->
+        <div class="step-indicator">
+            <div class="step active">1</div>
+            <div class="step">2</div>
+            <div class="step">3</div>
+            <div class="step">4</div>
+        </div>
+
+        <!-- 步驟 1：正常登入 -->
+        <div class="demo-section" id="step1">
+            <h2>🔐 步驟 1：正常的登入流程</h2>
+
+            <div class="explanation-box">
+                <h3>💡 正常情況</h3>
+                <p>使用者輸入正確的帳號密碼，系統會產生 SQL 指令來驗證身份。</p>
+            </div>
+
+            <div class="input-group">
+                <label>帳號：</label>
+                <input type="text" id="normal-username" value="admin" placeholder="輸入帳號">
+            </div>
+
+            <div class="input-group">
+                <label>密碼：</label>
+                <input type="text" id="normal-password" value="password123" placeholder="輸入密碼">
+            </div>
+
+            <button class="btn btn-primary" onclick="normalLogin()">正常登入</button>
+
+            <div class="code-display" id="normal-sql">
+                點擊「正常登入」查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="normal-result">
+                執行結果會顯示在這裡
+            </div>
+        </div>
+
+        <!-- 步驟 2：字串拼接的危險性 -->
+        <div class="demo-section" id="step2">
+            <h2>💣 步驟 2：不安全的字串拼接</h2>
+
+            <div class="warning-box">
+                <h3>⚠️ 危險的程式碼</h3>
+                <p>很多開發者會用字串拼接的方式產生 SQL 指令：</p>
+                <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto;">
+<span style="color: #66d9ef;">// 不安全的寫法 ❌</span>
+<span style="color: #f92672;">String</span> sql = <span style="color: #e6db74;">"SELECT * FROM users WHERE username = '"</span> + username + <span style="color: #e6db74;">"' AND password = '"</span> + password + <span style="color: #e6db74;">"'"</span>;
+                </pre>
+                <p>這種寫法會讓攻擊者有機可乘！</p>
+            </div>
+
+            <div class="flow-diagram">
+                <div class="flow-box">
+                    <strong>使用者輸入</strong><br>
+                    帳號：admin<br>
+                    密碼：password123
+                </div>
+                <div class="flow-arrow">➡️</div>
+                <div class="flow-box">
+                    <strong>字串拼接</strong><br>
+                    組合成 SQL 指令
+                </div>
+                <div class="flow-arrow">➡️</div>
+                <div class="flow-box success">
+                    <strong>最終 SQL</strong><br>
+                    WHERE username = 'admin'<br>
+                    AND password = 'password123'
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="showStep3()">下一步：看看攻擊者怎麼做</button>
+        </div>
+
+        <!-- 步驟 3：SQL Injection 攻擊 -->
+        <div class="demo-section" id="step3" style="display: none;">
+            <h2>🎯 步驟 3：SQL Injection 攻擊實作</h2>
+
+            <div class="danger-box">
+                <h3>🚨 攻擊者的想法</h3>
+                <p>攻擊者發現系統使用字串拼接，所以想辦法「破壞」SQL 指令的結構。</p>
+                <p>只要在輸入中加入單引號 <code>'</code>，就可以「提前結束」字串，然後注入自己的 SQL 指令！</p>
+            </div>
+
+            <div class="input-group">
+                <label>攻擊範例 - 帳號：</label>
+                <input type="text" id="attack-username" value="admin' --" placeholder="試試看：admin' --">
+            </div>
+
+            <div class="input-group">
+                <label>攻擊範例 - 密碼：</label>
+                <input type="text" id="attack-password" value="隨便輸入" placeholder="任意值">
+            </div>
+
+            <button class="btn btn-danger" onclick="attackLogin()">執行攻擊</button>
+
+            <div class="explanation-box" style="margin: 20px 0;">
+                <h3>💡 攻擊分析</h3>
+                <p>讓我們一步步看看字串拼接的過程：</p>
+            </div>
+
+            <div class="flow-diagram" style="flex-direction: column; align-items: stretch;">
+                <div class="flow-box">
+                    <strong>步驟 1：原始 SQL 模板</strong><br>
+                    <code>SELECT * FROM users WHERE username = '<span style="color: red;">使用者輸入</span>' AND password = '<span style="color: red;">使用者輸入</span>'</code>
+                </div>
+                <div class="flow-arrow" style="transform: rotate(90deg); margin: 10px 0;">➡️</div>
+                <div class="flow-box danger">
+                    <strong>步驟 2：使用者輸入 <code>admin' --</code></strong><br>
+                    <code>SELECT * FROM users WHERE username = '<span style="color: red;">admin' --</span>' AND password = '隨便輸入'</code>
+                </div>
+                <div class="flow-arrow" style="transform: rotate(90deg); margin: 10px 0;">➡️</div>
+                <div class="flow-box danger">
+                    <strong>步驟 3：字串被提前結束！</strong><br>
+                    <code>SELECT * FROM users WHERE username = '<span style="color: green;">admin</span><span style="color: red;">'</span> <span style="color: blue;">--</span> ' AND password = '隨便輸入'</code>
+                    <br><br>
+                    <div style="text-align: left;">
+                        • <span style="color: green;">admin</span> - 正常的帳號<br>
+                        • <span style="color: red;">'</span> - 提前結束字串<br>
+                        • <span style="color: blue;">--</span> - SQL 註解符號，後面的都被忽略了！
+                    </div>
+                </div>
+                <div class="flow-arrow" style="transform: rotate(90deg); margin: 10px 0;">➡️</div>
+                <div class="flow-box danger">
+                    <strong>步驟 4：實際執行的 SQL</strong><br>
+                    <code>SELECT * FROM users WHERE username = 'admin'</code>
+                    <br><br>
+                    <strong style="color: red;">❌ 密碼驗證被完全略過了！</strong>
+                </div>
+            </div>
+
+            <div class="code-display" id="attack-sql">
+                點擊「執行攻擊」查看實際的 SQL 指令
+            </div>
+
+            <div class="result-display" id="attack-result">
+                攻擊結果會顯示在這裡
+            </div>
+
+            <button class="btn btn-primary" onclick="showStep4()">下一步：了解其他攻擊手法</button>
+        </div>
+
+        <!-- 步驟 4：更多攻擊範例 -->
+        <div class="demo-section" id="step4" style="display: none;">
+            <h2>🔥 步驟 4：更多 SQL Injection 範例</h2>
+
+            <div class="warning-box">
+                <h3>⚠️ 常見的 SQL Injection 技巧</h3>
+                <p>除了使用 <code>--</code> 註解，攻擊者還有很多其他手法：</p>
+            </div>
+
+            <h3>範例 1：使用 OR 條件繞過驗證</h3>
+            <div class="input-group">
+                <label>帳號：</label>
+                <input type="text" id="attack2-username" value="admin' OR '1'='1" readonly>
+            </div>
+            <div class="input-group">
+                <label>密碼：</label>
+                <input type="text" id="attack2-password" value="任意值" readonly>
+            </div>
+            <button class="btn btn-danger" onclick="attack2Login()">執行範例 1</button>
+            <div class="code-display" id="attack2-sql">點擊按鈕查看 SQL 指令</div>
+            <div class="explanation-box">
+                <h3>💡 原理說明</h3>
+                <p>注入的 SQL 變成：</p>
+                <code>SELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = '任意值'</code>
+                <p>因為 <code>'1'='1'</code> 永遠為真，所以 WHERE 條件一定成立！</p>
+                <p><strong>註：</strong>實際運算優先序為 AND > OR，但這個範例仍可能繞過某些邏輯。</p>
+            </div>
+
+            <h3>範例 2：使用註解符號 (另一種寫法)</h3>
+            <div class="input-group">
+                <label>帳號：</label>
+                <input type="text" id="attack3-username" value="admin' #" readonly>
+            </div>
+            <div class="input-group">
+                <label>密碼：</label>
+                <input type="text" id="attack3-password" value="任意值" readonly>
+            </div>
+            <button class="btn btn-danger" onclick="attack3Login()">執行範例 2</button>
+            <div class="code-display" id="attack3-sql">點擊按鈕查看 SQL 指令</div>
+            <div class="explanation-box">
+                <h3>💡 原理說明</h3>
+                <p>MySQL 支援多種註解符號：</p>
+                <ul>
+                    <li><code>--</code> (後面需要有空格)</li>
+                    <li><code>#</code></li>
+                    <li><code>/* */</code></li>
+                </ul>
+                <p>這些符號都可以用來「註解掉」後面的密碼檢查。</p>
+            </div>
+
+            <h3>範例 3：使用 OR 1=1 繞過</h3>
+            <div class="input-group">
+                <label>帳號：</label>
+                <input type="text" id="attack4-username" value="' OR 1=1 --" readonly>
+            </div>
+            <div class="input-group">
+                <label>密碼：</label>
+                <input type="text" id="attack4-password" value="任意值" readonly>
+            </div>
+            <button class="btn btn-danger" onclick="attack4Login()">執行範例 3</button>
+            <div class="code-display" id="attack4-sql">點擊按鈕查看 SQL 指令</div>
+            <div class="explanation-box">
+                <h3>💡 原理說明</h3>
+                <p>注入的 SQL 變成：</p>
+                <code>SELECT * FROM users WHERE username = '' OR 1=1 -- ' AND password = '任意值'</code>
+                <p>因為 <code>1=1</code> 永遠為真，會選出資料表中的所有使用者！</p>
+            </div>
+            <div class="result-display" id="attack234-result">
+                執行結果會顯示在這裡
+            </div>
+        </div>
+
+        <!-- 資料庫視覺化 -->
+        <div class="database-visual">
+            <h2>💾 資料庫內容 - users 資料表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>帳號 (username)</th>
+                        <th>密碼 (password)</th>
+                        <th>角色</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>admin</td>
+                        <td>password123</td>
+                        <td>管理員</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>user1</td>
+                        <td>abc123</td>
+                        <td>一般使用者</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>user2</td>
+                        <td>qwerty</td>
+                        <td>一般使用者</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 防禦方法 -->
+        <div class="success-box">
+            <h3>✅ 如何防禦 SQL Injection？</h3>
+            <p><strong>1. 使用 Prepared Statement (參數化查詢)</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 5px; overflow-x: auto;">
+<span style="color: #6a9955;">// 安全的寫法 ✅</span>
+<span style="color: #4ec9b0;">PreparedStatement</span> stmt = conn.<span style="color: #dcdcaa;">prepareStatement</span>(
+    <span style="color: #ce9178;">"SELECT * FROM users WHERE username = ? AND password = ?"</span>
+);
+stmt.<span style="color: #dcdcaa;">setString</span>(<span style="color: #b5cea8;">1</span>, username);
+stmt.<span style="color: #dcdcaa;">setString</span>(<span style="color: #b5cea8;">2</span>, password);
+            </pre>
+
+            <p><strong>2. 使用 ORM 框架</strong></p>
+            <p>例如：Hibernate, Entity Framework, Django ORM 等，它們會自動處理參數化查詢。</p>
+
+            <p><strong>3. 輸入驗證</strong></p>
+            <p>檢查使用者輸入，過濾特殊字元（但這不應該是唯一的防禦手段）。</p>
+
+            <p><strong>4. 最小權限原則</strong></p>
+            <p>資料庫帳號只給必要的權限，不要使用 root 或 admin 帳號。</p>
+        </div>
+
+        <div class="success-box">
+            <h3>🎓 恭喜完成第二課！</h3>
+            <p>你已經了解：</p>
+            <ul>
+                <li>✓ SQL Injection 的原理</li>
+                <li>✓ 字串拼接的危險性</li>
+                <li>✓ 如何使用單引號和註解符號進行攻擊</li>
+                <li>✓ 基本的防禦方法</li>
+            </ul>
+            <p>下一課我們將學習「數字型 SQL Injection」，看看不需要單引號也能攻擊的情況。</p>
+            <a href="page3-numeric-injection.html" class="btn btn-primary">前往第三課</a>
+        </div>
+
+        <footer>
+            <p>⚠️ 請勿將這些技術用於非法用途，僅供學習與防禦使用</p>
+        </footer>
+    </div>
+
+    <script>
+        // 模擬資料庫
+        const users = [
+            {id: 1, username: 'admin', password: 'password123', role: '管理員'},
+            {id: 2, username: 'user1', password: 'abc123', role: '一般使用者'},
+            {id: 3, username: 'user2', password: 'qwerty', role: '一般使用者'}
+        ];
+
+        // 格式化 SQL 顯示
+        function formatSQL(sql, dangerous = false) {
+            let formatted = sql.replace(/\b(SELECT|FROM|WHERE|AND|OR)\b/g, '<span class="keyword">$1</span>');
+            formatted = formatted.replace(/'([^']*)'/g, '<span class="string">\'$1\'</span>');
+            formatted = formatted.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+
+            if (dangerous) {
+                formatted = formatted.replace(/(--|\#|\/\*|\*\/)/g, '<span class="danger">$1</span>');
+                formatted = formatted.replace(/(\bOR\b.*?(?=AND|$))/g, '<span class="danger">$1</span>');
+            }
+
+            return formatted;
+        }
+
+        // 正常登入
+        function normalLogin() {
+            const username = document.getElementById('normal-username').value;
+            const password = document.getElementById('normal-password').value;
+
+            // 不安全的字串拼接（示範用）
+            const sql = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+            document.getElementById('normal-sql').innerHTML = formatSQL(sql);
+
+            // 模擬查詢
+            const user = users.find(u => u.username === username && u.password === password);
+
+            const resultDiv = document.getElementById('normal-result');
+            if (user) {
+                resultDiv.className = 'result-display success';
+                resultDiv.innerHTML = `
+                    <strong>✅ 登入成功！</strong><br>
+                    歡迎回來，${user.role} ${user.username}！<br><br>
+                    <strong>SQL 執行結果：</strong>找到 1 筆符合的資料
+                `;
+            } else {
+                resultDiv.className = 'result-display error';
+                resultDiv.innerHTML = `
+                    <strong>❌ 登入失敗！</strong><br>
+                    帳號或密碼錯誤<br><br>
+                    <strong>SQL 執行結果：</strong>找到 0 筆符合的資料
+                `;
+            }
+
+            // 更新步驟指示器
+            document.querySelectorAll('.step')[0].classList.add('completed');
+        }
+
+        // 顯示步驟 3
+        function showStep3() {
+            document.getElementById('step3').style.display = 'block';
+            document.querySelectorAll('.step')[1].classList.add('completed');
+            document.querySelectorAll('.step')[2].classList.add('active');
+            document.getElementById('step3').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // SQL Injection 攻擊
+        function attackLogin() {
+            const username = document.getElementById('attack-username').value;
+            const password = document.getElementById('attack-password').value;
+
+            // 不安全的字串拼接
+            const sql = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+            document.getElementById('attack-sql').innerHTML = formatSQL(sql, true);
+
+            // 模擬：在實際情況中，-- 後面的內容會被當作註解
+            // 所以實際執行的是：SELECT * FROM users WHERE username = 'admin'
+            const actualSQL = sql.split('--')[0].trim();
+
+            const resultDiv = document.getElementById('attack-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                在沒有正確密碼的情況下，成功繞過驗證！<br><br>
+                <strong>實際執行的 SQL：</strong><br>
+                <code>${actualSQL}</code><br><br>
+                <strong>攻擊者成功以 admin 身份登入系統！</strong><br>
+                ⚠️ 這就是為什麼字串拼接非常危險
+            `;
+        }
+
+        // 顯示步驟 4
+        function showStep4() {
+            document.getElementById('step4').style.display = 'block';
+            document.querySelectorAll('.step')[2].classList.add('completed');
+            document.querySelectorAll('.step')[3].classList.add('active');
+            document.getElementById('step4').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 攻擊範例 2
+        function attack2Login() {
+            const username = document.getElementById('attack2-username').value;
+            const password = document.getElementById('attack2-password').value;
+            const sql = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+            document.getElementById('attack2-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('attack234-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                使用 OR 條件讓查詢結果永遠為真<br>
+                可能會返回多筆使用者資料
+            `;
+        }
+
+        // 攻擊範例 3
+        function attack3Login() {
+            const username = document.getElementById('attack3-username').value;
+            const password = document.getElementById('attack3-password').value;
+            const sql = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+            document.getElementById('attack3-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('attack234-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                使用 # 註解符號略過密碼驗證<br>
+                成功以 admin 身份登入
+            `;
+        }
+
+        // 攻擊範例 4
+        function attack4Login() {
+            const username = document.getElementById('attack4-username').value;
+            const password = document.getElementById('attack4-password').value;
+            const sql = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+            document.getElementById('attack4-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('attack234-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                使用 OR 1=1 讓條件永遠為真<br>
+                會返回資料表中的所有使用者資料！<br>
+                攻擊者可能會取得第一個使用者（通常是管理員）的權限
+            `;
+        }
+    </script>
+</body>
+</html>

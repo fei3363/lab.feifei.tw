@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS 練習場 - 學生實作</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .header h1 {
+            color: #00b4db;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .card-icon {
+            font-size: 32px;
+            margin-right: 15px;
+        }
+        
+        .card-title {
+            color: #333;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .card-subtitle {
+            color: #999;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .difficulty {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .difficulty.easy {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        
+        .difficulty.medium {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+        
+        .difficulty.hard {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        
+        .card-content {
+            color: #555;
+            line-height: 1.8;
+            margin: 15px 0;
+        }
+        
+        .card-content ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .card-content li {
+            margin-bottom: 8px;
+        }
+        
+        .input-area {
+            margin: 15px 0;
+        }
+        
+        .input-area label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .input-area input[type="text"],
+        .input-area textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            transition: border-color 0.3s;
+        }
+        
+        .input-area input[type="text"]:focus,
+        .input-area textarea:focus {
+            outline: none;
+            border-color: #00b4db;
+        }
+        
+        .input-area textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #00b4db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #008fb3;
+        }
+        
+        .result-area {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            min-height: 60px;
+            display: none;
+        }
+        
+        .result-area.show {
+            display: block;
+        }
+        
+        .hint {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+        
+        .hint strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .success-message {
+            background: #c8e6c9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 XSS 練習場</h1>
+        <p>透過實際操作學習 XSS 漏洞與防禦技巧</p>
+    </div>
+    
+    <div class="container">
+        <!-- 練習一：簡單反射型 XSS -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🎪</div>
+                <div>
+                    <div class="card-title">練習一：名字顯示</div>
+                    <div class="card-subtitle">Reflected XSS</div>
+                    <div class="difficulty easy">簡單</div>
+                </div>
+            </div>
+            <div class="card-content">
+                <p>請輸入你的名字，系統會顯示歡迎訊息。</p>
+                <p><strong>目標：</strong>嘗試注入 XSS Payload，讓頁面彈出警告視窗。</p>
+            </div>
+            <div class="input-area">
+                <label>你的名字：</label>
+                <input type="text" id="name1" placeholder="請輸入名字..." />
+                <button onclick="exercise1()">送出</button>
+            </div>
+            <div class="result-area" id="result1"></div>
+            <div class="hint">
+                <strong>💡 提示：</strong>
+                試試輸入 <code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code>
+            </div>
+        </div>
+        
+        <!-- 練習二：圖片標籤 XSS -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🖼️</div>
+                <div>
+                    <div class="card-title">練習二：圖片網址</div>
+                    <div class="card-subtitle">Image Tag XSS</div>
+                    <div class="difficulty easy">簡單</div>
+                </div>
+            </div>
+            <div class="card-content">
+                <p>輸入圖片網址，系統會顯示圖片。</p>
+                <p><strong>目標：</strong>使用無效的圖片 URL 搭配 onerror 事件觸發 XSS。</p>
+            </div>
+            <div class="input-area">
+                <label>圖片網址：</label>
+                <input type="text" id="imageUrl" placeholder="請輸入圖片 URL..." />
+                <button onclick="exercise2()">顯示圖片</button>
+            </div>
+            <div class="result-area" id="result2"></div>
+            <div class="hint">
+                <strong>💡 提示：</strong>
+                試試輸入 <code>x" onerror="alert('XSS')</code>
+            </div>
+        </div>
+        
+        <!-- 練習三：搜尋功能 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🔍</div>
+                <div>
+                    <div class="card-title">練習三：搜尋關鍵字</div>
+                    <div class="card-subtitle">Search XSS</div>
+                    <div class="difficulty medium">中等</div>
+                </div>
+            </div>
+            <div class="card-content">
+                <p>輸入搜尋關鍵字，系統會顯示搜尋結果。</p>
+                <p><strong>目標：</strong>找出多種不同的 XSS Payload 方式。</p>
+            </div>
+            <div class="input-area">
+                <label>搜尋關鍵字：</label>
+                <input type="text" id="search3" placeholder="請輸入關鍵字..." />
+                <button onclick="exercise3()">搜尋</button>
+            </div>
+            <div class="result-area" id="result3"></div>
+            <div class="hint">
+                <strong>💡 提示：</strong>
+                試試 &lt;img&gt;、&lt;svg&gt;、&lt;iframe&gt; 等不同標籤
+            </div>
+        </div>
+        
+        <!-- 練習四：留言功能 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">💬</div>
+                <div>
+                    <div class="card-title">練習四：留言板</div>
+                    <div class="card-subtitle">Stored XSS</div>
+                    <div class="difficulty medium">中等</div>
+                </div>
+            </div>
+            <div class="card-content">
+                <p>在留言板留下訊息，訊息會被儲存並顯示。</p>
+                <p><strong>目標：</strong>注入會被持久儲存的 XSS Payload。</p>
+            </div>
+            <div class="input-area">
+                <label>留言內容：</label>
+                <textarea id="comment4" placeholder="請輸入留言..."></textarea>
+                <button onclick="exercise4()">送出留言</button>
+            </div>
+            <div class="result-area" id="result4"></div>
+            <button onclick="clearComments()" style="background: #e53935; margin-top: 10px;">清除所有留言</button>
+            <div class="hint">
+                <strong>💡 提示：</strong>
+                這是 Stored XSS，Payload 會被儲存在 localStorage
+            </div>
+        </div>
+        
+        <!-- 練習五：HTML 編碼挑戰 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🔐</div>
+                <div>
+                    <div class="card-title">練習五：編碼測試</div>
+                    <div class="card-subtitle">Bypass Filter</div>
+                    <div class="difficulty hard">困難</div>
+                </div>
+            </div>
+            <div class="card-content">
+                <p>這個欄位會過濾 &lt;script&gt; 標籤。</p>
+                <p><strong>目標：</strong>繞過過濾機制，成功注入 XSS。</p>
+                <ul>
+                    <li>系統會過濾 "script" 字串</li>
+                    <li>嘗試使用其他方式觸發 JavaScript</li>
+                </ul>
+            </div>
+            <div class="input-area">
+                <label>測試輸入：</label>
+                <input type="text" id="bypass5" placeholder="嘗試繞過過濾..." />
+                <button onclick="exercise5()">測試</button>
+            </div>
+            <div class="result-area" id="result5"></div>
+            <div class="hint">
+                <strong>💡 提示：</strong>
+                &lt;script&gt; 被過濾了，試試 &lt;img&gt; 或 &lt;svg&gt;
+            </div>
+        </div>
+        
+        <!-- 練習六：安全實作 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">🛡️</div>
+                <div>
+                    <div class="card-title">練習六：安全顯示</div>
+                    <div class="card-subtitle">Security Practice</div>
+                    <div class="difficulty medium">中等</div>
+                </div>
+            </div>
+            <div class="card-content">
+                <p>這是一個安全的輸入欄位，使用了適當的防護措施。</p>
+                <p><strong>目標：</strong>觀察安全措施如何防止 XSS。</p>
+            </div>
+            <div class="input-area">
+                <label>安全輸入：</label>
+                <textarea id="safe6" placeholder="隨便輸入什麼都不會被執行..."></textarea>
+                <button onclick="exercise6()">安全顯示</button>
+            </div>
+            <div class="result-area" id="result6"></div>
+            <div class="hint">
+                <strong>✅ 安全措施：</strong>
+                使用 textContent 和 HTML 編碼防止 XSS
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p><strong>⚠️ 重要提醒：</strong></p>
+        <p>這些練習僅供教學使用，請勿在未經授權的網站上進行任何測試！</p>
+        <p>在實際環境中，未經授權的滲透測試是違法行為。</p>
+    </div>
+    
+    <script>
+        // 練習一：簡單的 Reflected XSS
+        function exercise1() {
+            var name = document.getElementById('name1').value;
+            var result = document.getElementById('result1');
+            // ❌ 不安全：直接使用 innerHTML
+            result.innerHTML = '👋 歡迎，<strong>' + name + '</strong>！';
+            result.classList.add('show');
+        }
+        
+        // 練習二：圖片標籤 XSS
+        function exercise2() {
+            var url = document.getElementById('imageUrl').value;
+            var result = document.getElementById('result2');
+            // ❌ 不安全：直接插入圖片標籤
+            result.innerHTML = '<img src="' + url + '" style="max-width: 100%; border-radius: 8px;" />';
+            result.classList.add('show');
+        }
+        
+        // 練習三：搜尋功能
+        function exercise3() {
+            var keyword = document.getElementById('search3').value;
+            var result = document.getElementById('result3');
+            // ❌ 不安全：直接顯示搜尋關鍵字
+            result.innerHTML = '🔍 搜尋結果：<br><div style="margin-top: 10px;">你搜尋了：' + keyword + '</div>';
+            result.classList.add('show');
+        }
+        
+        // 練習四：留言板（Stored XSS）
+        function exercise4() {
+            var comment = document.getElementById('comment4').value;
+            var comments = JSON.parse(localStorage.getItem('practice_comments')) || [];
+            
+            comments.push({
+                text: comment,
+                time: new Date().toLocaleString('zh-TW')
+            });
+            
+            localStorage.setItem('practice_comments', JSON.stringify(comments));
+            displayComments();
+        }
+        
+        function displayComments() {
+            var comments = JSON.parse(localStorage.getItem('practice_comments')) || [];
+            var result = document.getElementById('result4');
+            
+            if (comments.length === 0) {
+                result.innerHTML = '<div style="color: #999;">還沒有留言</div>';
+            } else {
+                var html = '<div style="color: #333; font-weight: bold; margin-bottom: 10px;">所有留言：</div>';
+                comments.forEach(function(c, i) {
+                    // ❌ 不安全：直接顯示儲存的內容
+                    html += '<div style="background: white; padding: 10px; border-radius: 5px; margin-bottom: 8px;">';
+                    html += '<div style="font-size: 12px; color: #999;">' + c.time + '</div>';
+                    html += '<div style="margin-top: 5px;">' + c.text + '</div>';
+                    html += '</div>';
+                });
+                result.innerHTML = html;
+            }
+            result.classList.add('show');
+        }
+        
+        function clearComments() {
+            localStorage.removeItem('practice_comments');
+            displayComments();
+        }
+        
+        // 練習五：繞過過濾
+        function exercise5() {
+            var input = document.getElementById('bypass5').value;
+            var result = document.getElementById('result5');
+            
+            // 簡單的過濾：移除 "script" 字串
+            var filtered = input.replace(/script/gi, '');
+            
+            result.innerHTML = '過濾後的結果：<br><div style="background: white; padding: 10px; border-radius: 5px; margin-top: 10px;">' + filtered + '</div>';
+            result.classList.add('show');
+        }
+        
+        // 練習六：安全實作
+        function exercise6() {
+            var input = document.getElementById('safe6').value;
+            var result = document.getElementById('result6');
+            
+            // ✅ 安全：HTML 編碼
+            function escapeHtml(text) {
+                var map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+            
+            var safeInput = escapeHtml(input);
+            result.innerHTML = '✅ 安全顯示：<br><div style="background: #c8e6c9; padding: 10px; border-radius: 5px; margin-top: 10px; color: #2e7d32;">' + safeInput + '</div>';
+            result.classList.add('show');
+        }
+        
+        // 頁面載入時顯示已儲存的留言
+        window.onload = function() {
+            displayComments();
+        };
+    </script>
+</body>
+</html>

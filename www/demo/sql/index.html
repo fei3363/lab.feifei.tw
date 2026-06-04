@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL 與 SQL Injection 視覺化教學</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ SQL 與 SQL Injection 視覺化教學</h1>
+            <p class="subtitle">透過互動式範例，輕鬆理解 SQL 與資安概念</p>
+        </header>
+
+        <div class="course-grid">
+            <div class="course-card">
+                <div class="card-icon">📊</div>
+                <h2>第一課：SQL 基礎與 CRUD 操作</h2>
+                <p>學習資料庫的增刪改查，視覺化理解 SQL 指令如何運作</p>
+                <ul>
+                    <li>✓ 新增資料 (CREATE)</li>
+                    <li>✓ 查詢資料 (READ)</li>
+                    <li>✓ 更新資料 (UPDATE)</li>
+                    <li>✓ 刪除資料 (DELETE)</li>
+                </ul>
+                <a href="page1-crud.html" class="btn btn-primary">開始學習</a>
+            </div>
+
+            <div class="course-card">
+                <div class="card-icon">⚠️</div>
+                <h2>第二課：SQL Injection 入門</h2>
+                <p>理解字串拼接的危險性，看看駭客如何注入惡意 SQL 指令</p>
+                <ul>
+                    <li>✓ 字串拼接的漏洞</li>
+                    <li>✓ WHERE 條件注入</li>
+                    <li>✓ 單引號繞過</li>
+                    <li>✓ 實際攻擊演示</li>
+                </ul>
+                <a href="page2-injection-basic.html" class="btn btn-warning">開始學習</a>
+            </div>
+
+            <div class="course-card">
+                <div class="card-icon">🔢</div>
+                <h2>第三課：數字型 SQL Injection</h2>
+                <p>學習不需要單引號的注入攻擊，理解數字型參數的安全問題</p>
+                <ul>
+                    <li>✓ 數字型參數注入</li>
+                    <li>✓ 無需單引號繞過</li>
+                    <li>✓ 邏輯運算子應用</li>
+                    <li>✓ 防禦方法</li>
+                </ul>
+                <a href="page3-numeric-injection.html" class="btn btn-danger">開始學習</a>
+            </div>
+
+            <div class="course-card">
+                <div class="card-icon">🔗</div>
+                <h2>第四課：Union Select 注入</h2>
+                <p>學習進階注入技巧，使用 UNION 查詢取得額外資料</p>
+                <ul>
+                    <li>✓ ORDER BY 探測欄位數</li>
+                    <li>✓ UNION SELECT NULL</li>
+                    <li>✓ 資料外洩技巧</li>
+                    <li>✓ 實戰演練</li>
+                </ul>
+                <a href="page4-union-select.html" class="btn btn-danger">開始學習</a>
+            </div>
+
+            <div class="course-card">
+                <div class="card-icon">🕵️</div>
+                <h2>第五課：盲注 (Blind SQL Injection)</h2>
+                <p>學習在沒有錯誤訊息時，如何一步步竊取資料</p>
+                <ul>
+                    <li>✓ 布林盲注</li>
+                    <li>✓ 時間盲注</li>
+                    <li>✓ 逐字元探測</li>
+                    <li>✓ 自動化攻擊</li>
+                </ul>
+                <a href="page5-blind-injection.html" class="btn btn-danger">開始學習</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>⚠️ 本教學僅供學習用途，請勿用於非法活動</p>
+        </footer>
+    </div>
+</body>
+</html>

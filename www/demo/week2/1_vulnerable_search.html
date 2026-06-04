@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜尋頁面 - 不安全版本（有 XSS 漏洞）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        
+        .warning strong {
+            color: #d32f2f;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .result {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 100px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .result-content {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        
+        .code-block .comment {
+            color: #75715e;
+        }
+        
+        .code-block .keyword {
+            color: #f92672;
+        }
+        
+        .code-block .function {
+            color: #66d9ef;
+        }
+        
+        .code-block .string {
+            color: #e6db74;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning">
+            <strong>⚠️ 警告：</strong> 這是一個有 XSS 漏洞的不安全網頁，僅供教學使用！
+        </div>
+        
+        <h1>🔍 搜尋頁面</h1>
+        <p class="subtitle">Reflected XSS 漏洞示範</p>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="請輸入搜尋關鍵字..." />
+            <button onclick="search()">搜尋</button>
+        </div>
+        
+        <div class="result" id="result">
+            <div class="result-title">搜尋結果：</div>
+            <div class="result-content" id="resultContent"></div>
+        </div>
+        
+        <div class="code-block">
+<span class="comment">// 不安全的程式碼（有 XSS 漏洞）</span>
+<span class="keyword">
+    function</span> <span class="function">search</span>() {
+    <span class="keyword">var</span> keyword = document.getElementById(<span class="string">'searchInput'</span>).value;
+    <span class="keyword">var</span> result = document.getElementById(<span class="string">'resultContent'</span>);
+    
+    <span class="comment">// ❌ 危險！直接使用 innerHTML 沒有過濾</span>
+    result.<span class="keyword">innerHTML</span> = <span class="string">'你搜尋了：'</span> + keyword;
+    
+    document.getElementById(<span class="string">'result'</span>).classList.add(<span class="string">'show'</span>);
+}
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 10px; font-size: 14px;">
+            <strong>🧪 測試 Payload：</strong><br>
+            <code style="background: white; padding: 5px; border-radius: 4px; display: inline-block; margin-top: 5px;">
+                &lt;script&gt;alert('XSS')&lt;/script&gt;
+            </code><br>
+            <code style="background: white; padding: 5px; border-radius: 4px; display: inline-block; margin-top: 5px;">
+                &lt;img src=x onerror=alert('XSS')&gt;
+            </code><br>
+            <code style="background: white; padding: 5px; border-radius: 4px; display: inline-block; margin-top: 5px;">
+                &lt;svg onload=alert('XSS')&gt;
+            </code>
+        </div>
+    </div>
+    
+    <script>
+        // 不安全的搜尋函數
+        function search() {
+            var keyword = document.getElementById('searchInput').value;
+            var result = document.getElementById('resultContent');
+            
+            // ❌ 危險！直接使用 innerHTML 且沒有任何過濾
+            // 這會導致 Reflected XSS 漏洞
+            result.innerHTML = '你搜尋了：' + keyword + '';
+            
+            document.getElementById('result').classList.add('show');
+        }
+        
+        // 按下 Enter 鍵也可以搜尋
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+    </script>
+</body>
+</html>

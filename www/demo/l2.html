@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網站運作原理與資安攻擊面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-1: rgb(245, 214, 82);
+            --color-2: rgb(207, 232, 103);
+            --color-3: rgb(102, 80, 64);
+            --color-4: rgb(251, 240, 187);
+            --color-5: rgb(240, 243, 192);
+            --color-6: rgb(255, 255, 255);
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background: linear-gradient(135deg, var(--color-5) 0%, var(--color-4) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: var(--color-6);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(102, 80, 64, 0.15);
+        }
+
+        h1 {
+            color: var(--color-3);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--color-3);
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: var(--color-6);
+            border: 3px solid var(--color-1);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--color-3);
+        }
+
+        .tab:hover {
+            background: var(--color-1);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(245, 214, 82, 0.4);
+        }
+
+        .tab.active {
+            background: var(--color-2);
+            border-color: var(--color-2);
+        }
+
+        .content-section {
+            display: none;
+            background: var(--color-6);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(102, 80, 64, 0.15);
+            animation: fadeIn 0.5s;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .flow-box {
+            background: var(--color-4);
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid var(--color-1);
+            min-width: 150px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .flow-box:hover {
+            transform: scale(1.05);
+            background: var(--color-1);
+            box-shadow: 0 8px 20px rgba(245, 214, 82, 0.4);
+        }
+
+        .flow-box h3 {
+            color: var(--color-3);
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .flow-box p {
+            color: var(--color-3);
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: var(--color-3);
+            font-weight: bold;
+        }
+
+        .info-card {
+            background: var(--color-5);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border-left: 5px solid var(--color-2);
+        }
+
+        .info-card h3 {
+            color: var(--color-3);
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .info-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-card li {
+            color: var(--color-3);
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .info-card li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: var(--color-2);
+            font-weight: bold;
+        }
+
+        .attack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .attack-card {
+            background: linear-gradient(135deg, var(--color-4) 0%, var(--color-5) 100%);
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid var(--color-1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .attack-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-2);
+            box-shadow: 0 10px 25px rgba(207, 232, 103, 0.3);
+        }
+
+        .attack-card h4 {
+            color: var(--color-3);
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+
+        .attack-card p {
+            color: var(--color-3);
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .interactive-demo {
+            background: var(--color-4);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .demo-button {
+            background: var(--color-2);
+            color: var(--color-3);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+
+        .demo-button:hover {
+            background: var(--color-1);
+            transform: scale(1.05);
+        }
+
+        .demo-output {
+            background: var(--color-6);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            min-height: 100px;
+            color: var(--color-3);
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            line-height: 1.8;
+        }
+
+        .highlight {
+            background: var(--color-1);
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .flow-diagram {
+                flex-direction: column;
+            }
+            
+            .arrow {
+                transform: rotate(90deg);
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .tab {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 網站運作原理與資安攻擊面</h1>
+            <p class="subtitle">從 DNS 到 HTTP：深入了解網路運作與常見攻擊手法</p>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('dns')">DNS 解析</div>
+            <div class="tab" onclick="showTab('tcp')">TCP 連線</div>
+            <div class="tab" onclick="showTab('http')">HTTP 協定</div>
+            <div class="tab" onclick="showTab('architecture')">網站架構</div>
+            <div class="tab" onclick="showTab('attacks')">攻擊面分析</div>
+        </div>
+
+        <div id="dns" class="content-section active">
+            <h2 style="color: var(--color-3); margin-bottom: 25px; font-size: 2em;">📡 DNS 網域名稱解析</h2>
+            
+            <div class="flow-diagram">
+                <div class="flow-box">
+                    <h3>1. 瀏覽器</h3>
+                    <p>使用者輸入網址<br>www.example.com</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-box">
+                    <h3>2. DNS 遞迴查詢</h3>
+                    <p>本機 DNS 伺服器<br>開始查詢流程</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-box">
+                    <h3>3. 根伺服器</h3>
+                    <p>查詢 .com<br>頂級網域伺服器</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-box">
+                    <h3>4. 取得 IP</h3>
+                    <p>返回目標主機<br>IP 位址</p>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>DNS 運作細節</h3>
+                <ul>
+                    <li><strong>快取機制：</strong>瀏覽器、作業系統、ISP 都會快取 DNS 記錄，加速後續查詢</li>
+                    <li><strong>遞迴查詢：</strong>本機 DNS 會一層層向上查詢，從根伺服器到頂級網域再到權威伺服器</li>
+                    <li><strong>TTL 時間：</strong>每筆 DNS 記錄都有存活時間，過期後需重新查詢</li>
+                    <li><strong>記錄類型：</strong>A 記錄（IPv4）、AAAA（IPv6）、CNAME（別名）、MX（郵件）等</li>
+                </ul>
+            </div>
+
+            <div class="interactive-demo">
+                <h3 style="color: var(--color-3); margin-bottom: 20px;">🔍 模擬 DNS 查詢</h3>
+                <button class="demo-button" onclick="simulateDNS()">執行 DNS 查詢</button>
+                <div class="demo-output" id="dnsOutput">點擊按鈕開始模擬 DNS 解析流程...</div>
+            </div>
+        </div>
+
+        <div id="tcp" class="content-section">
+            <h2 style="color: var(--color-3); margin-bottom: 25px; font-size: 2em;">🤝 TCP 三向交握</h2>
+            
+            <div class="flow-diagram">
+                <div class="flow-box">
+                    <h3>SYN</h3>
+                    <p>客戶端發送<br>同步請求</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-box">
+                    <h3>SYN-ACK</h3>
+                    <p>伺服器確認<br>並回應</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-box">
+                    <h3>ACK</h3>
+                    <p>客戶端確認<br>連線建立</p>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>TCP 連線特性</h3>
+                <ul>
+                    <li><strong>可靠傳輸：</strong>保證封包順序正確，遺失會重傳</li>
+                    <li><strong>流量控制：</strong>根據接收端能力調整傳送速度</li>
+                    <li><strong>壅塞控制：</strong>偵測網路狀況，避免過度傳輸</li>
+                    <li><strong>全雙工通訊：</strong>雙向同時傳輸資料</li>
+                    <li><strong>連線導向：</strong>通訊前先建立連線，結束後釋放連線</li>
+                </ul>
+            </div>
+
+            <div class="interactive-demo">
+                <h3 style="color: var(--color-3); margin-bottom: 20px;">🔄 模擬 TCP 握手</h3>
+                <button class="demo-button" onclick="simulateTCP()">執行三向交握</button>
+                <div class="demo-output" id="tcpOutput">點擊按鈕觀看 TCP 連線建立過程...</div>
+            </div>
+        </div>
+
+        <div id="http" class="content-section">
+            <h2 style="color: var(--color-3); margin-bottom: 25px; font-size: 2em;">📨 HTTP 協定基礎</h2>
+            
+            <div class="info-card">
+                <h3>HTTP 請求方法</h3>
+                <ul>
+                    <li><strong>GET：</strong>請求取得資源，參數放在 URL 中</li>
+                    <li><strong>POST：</strong>提交資料給伺服器，常用於表單送出</li>
+                    <li><strong>PUT：</strong>更新資源，上傳完整內容</li>
+                    <li><strong>DELETE：</strong>刪除指定資源</li>
+                    <li><strong>PATCH：</strong>部分更新資源</li>
+                    <li><strong>HEAD：</strong>只取得標頭資訊，不取得內容</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>常見狀態碼</h3>
+                <ul>
+                    <li><strong>200 OK：</strong>請求成功</li>
+                    <li><strong>301/302：</strong>永久/暫時重新導向</li>
+                    <li><strong>400 Bad Request：</strong>錯誤的請求格式</li>
+                    <li><strong>401 Unauthorized：</strong>需要驗證身份</li>
+                    <li><strong>403 Forbidden：</strong>無權限存取</li>
+                    <li><strong>404 Not Found：</strong>找不到資源</li>
+                    <li><strong>500 Internal Server Error：</strong>伺服器內部錯誤</li>
+                    <li><strong>503 Service Unavailable：</strong>服務暫時無法使用</li>
+                </ul>
+            </div>
+
+            <div class="interactive-demo">
+                <h3 style="color: var(--color-3); margin-bottom: 20px;">📤 模擬 HTTP 請求</h3>
+                <button class="demo-button" onclick="simulateHTTP('GET')">GET 請求</button>
+                <button class="demo-button" onclick="simulateHTTP('POST')">POST 請求</button>
+                <div class="demo-output" id="httpOutput">選擇一個請求方法來檢視 HTTP 訊息格式...</div>
+            </div>
+        </div>
+
+        <div id="architecture" class="content-section">
+            <h2 style="color: var(--color-3); margin-bottom: 25px; font-size: 2em;">🏗️ 常見網站架構</h2>
+            
+            <div class="info-card">
+                <h3>單體式架構 (Monolithic)</h3>
+                <ul>
+                    <li><strong>特點：</strong>所有功能整合在單一應用程式中</li>
+                    <li><strong>優點：</strong>開發簡單、部署方便、效能較佳</li>
+                    <li><strong>缺點：</strong>難以擴展、維護困難、技術棧受限</li>
+                    <li><strong>適用：</strong>小型專案、MVP 產品、團隊規模小</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>微服務架構 (Microservices)</h3>
+                <ul>
+                    <li><strong>特點：</strong>將應用拆分為多個獨立的小服務</li>
+                    <li><strong>優點：</strong>獨立部署、技術多樣性、容錯性高</li>
+                    <li><strong>缺點：</strong>複雜度高、需要服務治理、網路延遲</li>
+                    <li><strong>適用：</strong>大型系統、高流量網站、多團隊協作</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>典型三層架構</h3>
+                <ul>
+                    <li><strong>前端層 (Presentation)：</strong>使用者介面、瀏覽器渲染</li>
+                    <li><strong>應用層 (Application)：</strong>商業邏輯、API 伺服器</li>
+                    <li><strong>資料層 (Data)：</strong>資料庫、快取、檔案儲存</li>
+                    <li><strong>額外元件：</strong>負載平衡器、CDN、訊息佇列、快取層</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>擴展策略</h3>
+                <ul>
+                    <li><strong>垂直擴展：</strong>增加單機硬體資源（CPU、記憶體）</li>
+                    <li><strong>水平擴展：</strong>增加伺服器數量，透過負載平衡分散流量</li>
+                    <li><strong>資料庫讀寫分離：</strong>主機寫入，從機讀取</li>
+                    <li><strong>快取應用：</strong>Redis、Memcached 減輕資料庫壓力</li>
+                    <li><strong>CDN 加速：</strong>靜態資源分散到各地節點</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="attacks" class="content-section">
+            <h2 style="color: var(--color-3); margin-bottom: 25px; font-size: 2em;">⚠️ 常見攻擊面與防護</h2>
+            
+            <div class="attack-grid">
+                <div class="attack-card">
+                    <h4>🎣 XSS 跨站腳本攻擊</h4>
+                    <p><strong>攻擊方式：</strong>注入惡意 JavaScript 程式碼到網頁中</p>
+                    <p><strong>防護：</strong>輸入驗證、輸出編碼、CSP 政策、HttpOnly Cookie</p>
+                </div>
+
+                <div class="attack-card">
+                    <h4>💉 SQL Injection</h4>
+                    <p><strong>攻擊方式：</strong>透過輸入欄位插入 SQL 指令</p>
+                    <p><strong>防護：</strong>使用參數化查詢、ORM、輸入驗證、最小權限原則</p>
+                </div>
+
+                <div class="attack-card">
+                    <h4>🔐 CSRF 跨站請求偽造</h4>
+                    <p><strong>攻擊方式：</strong>誘使使用者在已登入狀態下執行非預期操作</p>
+                    <p><strong>防護：</strong>CSRF Token、SameSite Cookie、驗證 Referer</p>
+                </div>
+
+                <div class="attack-card">
+                    <h4>🚪 暴力破解</h4>
+                    <p><strong>攻擊方式：</strong>大量嘗試登入，猜測帳號密碼</p>
+                    <p><strong>防護：</strong>登入限制、驗證碼、帳號鎖定、多因子認證</p>
+                </div>
+
+                <div class="attack-card">
+                    <h4>💥 DDoS 阻斷服務</h4>
+                    <p><strong>攻擊方式：</strong>大量請求癱瘓伺服器</p>
+                    <p><strong>防護：</strong>CDN、流量清洗、限流機制、彈性擴展</p>
+                </div>
+
+                <div class="attack-card">
+                    <h4>🕵️ 中間人攻擊</h4>
+                    <p><strong>攻擊方式：</strong>攔截和竄改通訊內容</p>
+                    <p><strong>防護：</strong>HTTPS/TLS、憑證驗證、HSTS、憑證釘扎</p>
+                </div>
+
+                <div class="attack-card">
+                    <h4>📂 目錄遍歷</h4>
+                    <p><strong>攻擊方式：</strong>存取未授權的檔案和目錄</p>
+                    <p><strong>防護：</strong>路徑驗證、白名單、權限控制、避免暴露目錄結構</p>
+                </div>
+
+                <div class="attack-card">
+                    <h4>🔓 Session 劫持</h4>
+                    <p><strong>攻擊方式：</strong>竊取使用者的 Session ID</p>
+                    <p><strong>防護：</strong>Secure Cookie、Session 更新、IP 綁定、逾時機制</p>
+                </div>
+            </div>
+
+            <div class="info-card" style="margin-top: 30px;">
+                <h3>🛡️ 資安防護最佳實踐</h3>
+                <ul>
+                    <li><strong>縱深防禦：</strong>多層次安全機制，不依賴單一防護</li>
+                    <li><strong>最小權限原則：</strong>只給予必要的存取權限</li>
+                    <li><strong>定期更新：</strong>及時修補已知漏洞，更新套件和框架</li>
+                    <li><strong>安全測試：</strong>滲透測試、程式碼審查、弱點掃描</li>
+                    <li><strong>日誌監控：</strong>記錄異常行為，建立告警機制</li>
+                    <li><strong>資料加密：</strong>敏感資料傳輸和儲存都要加密</li>
+                    <li><strong>備份機制：</strong>定期備份，確保資料可恢復</li>
+                    <li><strong>安全意識：</strong>團隊教育訓練，建立安全文化</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const sections = document.querySelectorAll('.content-section');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            sections.forEach(section => section.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function simulateDNS() {
+            const output = document.getElementById('dnsOutput');
+            let step = 0;
+            const steps = [
+                '🔍 步驟 1：瀏覽器檢查本機快取...',
+                '📋 步驟 2：查詢作業系統 DNS 快取...',
+                '🌐 步驟 3：向本機 DNS 伺服器發送查詢請求...',
+                '🏢 步驟 4：本機 DNS 向根伺服器查詢 .com 頂級網域...',
+                '📡 步驟 5：根伺服器回應 .com 權威伺服器位址...',
+                '🎯 步驟 6：查詢 example.com 的權威伺服器...',
+                '✅ 步驟 7：取得 IP 位址 <span class="highlight">93.184.216.34</span>',
+                '💾 步驟 8：快取 DNS 記錄（TTL: 3600 秒）',
+                '🎉 DNS 解析完成！準備建立 TCP 連線...'
+            ];
+
+            output.innerHTML = '';
+            
+            const interval = setInterval(() => {
+                if (step < steps.length) {
+                    output.innerHTML += steps[step] + '<br>';
+                    step++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 600);
+        }
+
+        function simulateTCP() {
+            const output = document.getElementById('tcpOutput');
+            let step = 0;
+            const steps = [
+                '📤 客戶端 → 伺服器：發送 <span class="highlight">SYN</span> 封包 (Seq=1000)',
+                '⏳ 等待伺服器回應...',
+                '📥 伺服器 → 客戶端：回應 <span class="highlight">SYN-ACK</span> (Seq=2000, Ack=1001)',
+                '⏳ 客戶端準備確認...',
+                '📤 客戶端 → 伺服器：發送 <span class="highlight">ACK</span> (Seq=1001, Ack=2001)',
+                '✅ TCP 三向交握完成！',
+                '🔗 連線已建立，可以開始傳輸資料',
+                '📊 連線狀態：<span class="highlight">ESTABLISHED</span>'
+            ];
+
+            output.innerHTML = '';
+            
+            const interval = setInterval(() => {
+                if (step < steps.length) {
+                    output.innerHTML += steps[step] + '<br>';
+                    step++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 700);
+        }
+
+        function simulateHTTP(method) {
+            const output = document.getElementById('httpOutput');
+            
+            if (method === 'GET') {
+                output.innerHTML = `
+                    <strong>📤 HTTP GET 請求：</strong><br><br>
+                    GET /api/users/123 HTTP/1.1<br>
+                    Host: <span class="highlight">www.example.com</span><br>
+                    User-Agent: Mozilla/5.0<br>
+                    Accept: application/json<br>
+                    Cookie: session_id=abc123<br><br>
+                    
+                    <strong>📥 伺服器回應：</strong><br><br>
+                    HTTP/1.1 <span class="highlight">200 OK</span><br>
+                    Content-Type: application/json<br>
+                    Content-Length: 85<br><br>
+                    {<br>
+                    &nbsp;&nbsp;"id": 123,<br>
+                    &nbsp;&nbsp;"name": "張小明",<br>
+                    &nbsp;&nbsp;"email": "ming@example.com"<br>
+                    }
+                `;
+            } else {
+                output.innerHTML = `
+                    <strong>📤 HTTP POST 請求：</strong><br><br>
+                    POST /api/users HTTP/1.1<br>
+                    Host: <span class="highlight">www.example.com</span><br>
+                    Content-Type: application/json<br>
+                    Content-Length: 78<br><br>
+                    {<br>
+                    &nbsp;&nbsp;"name": "王大華",<br>
+                    &nbsp;&nbsp;"email": "wang@example.com"<br>
+                    }<br><br>
+                    
+                    <strong>📥 伺服器回應：</strong><br><br>
+                    HTTP/1.1 <span class="highlight">201 Created</span><br>
+                    Location: /api/users/124<br>
+                    Content-Type: application/json<br><br>
+                    {<br>
+                    &nbsp;&nbsp;"id": 124,<br>
+                    &nbsp;&nbsp;"message": "使用者建立成功"<br>
+                    }
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

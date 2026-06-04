@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端三劍客教學 - 尋找隱藏的 FLAG</title>
+    <!-- CSS 檔案引入 -->
+
+    
+    <!-- 
+        ╔═══════════════════════════════════════════╗
+        ║  恭喜你找到第一個線索！                    ║
+        ║  HTML FLAG 片段: KIWIS{H7ML_              ║
+        ║  提示：還有兩個片段在 CSS 和 JS 中...      ║
+        ╚═══════════════════════════════════════════╝
+    -->
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 前端三劍客教學</h1>
+            <p class="subtitle">HTML × CSS × JavaScript 完整入門</p>
+            <div class="ctf-banner">
+                🚩 特別任務：在程式碼註解中找出三個 FLAG 片段並組合！
+            </div>
+        </header>
+
+        <div class="flag-tracker">
+            <h3>🔍 FLAG 收集進度</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar">0%</div>
+            </div>
+            <p style="margin: 15px 0;">提示：使用「檢視原始碼」(Ctrl+U 或 Cmd+U) 尋找註解中的 FLAG 片段</p>
+            <div class="flag-input">
+                <input type="text" id="flagInput" placeholder="輸入完整的 FLAG">
+                <button onclick="checkFlag()">驗證 FLAG</button>
+            </div>
+            <div class="flag-result" id="flagResult"></div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('html')">📄 HTML</div>
+            <div class="tab" onclick="showTab('css')">🎨 CSS</div>
+            <div class="tab" onclick="showTab('js')">⚡ JavaScript</div>
+            <div class="tab" onclick="showTab('integration')">🔗 整合應用</div>
+        </div>
+
+        <div id="html" class="content-section active">
+            <div class="card">
+                <h2>📄 HTML - 超文本標記語言</h2>
+                <p>HTML (HyperText Markup Language) 是網頁的骨架，定義網頁的結構和內容。</p>
+
+                <h3>什麼是 HTML？</h3>
+                <p>HTML 使用「標籤」(Tags) 來標記不同類型的內容。每個標籤都有特定的意義和功能，瀏覽器會根據這些標籤來呈現網頁。</p>
+
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h4>🏗️ 結構化</h4>
+                        <p>使用語意化標籤組織內容，讓網頁結構清晰</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🔗 超連結</h4>
+                        <p>透過連結將不同頁面串連，形成網路</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📱 跨平台</h4>
+                        <p>在各種裝置和瀏覽器上都能正常顯示</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>♿ 無障礙</h4>
+                        <p>支援螢幕閱讀器，讓所有人都能使用</p>
+                    </div>
+                </div>
+
+                <h3>基本 HTML 結構</h3>
+                <div class="code-block" data-lang="HTML">
+                    <pre>&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-TW"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;我的第一個網頁&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;!-- 這是 HTML 註解，瀏覽器不會顯示 --&gt;
+    &lt;h1&gt;歡迎來到我的網站&lt;/h1&gt;
+    &lt;p&gt;這是一個段落。&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+                </div>
+
+                <h3>常用 HTML 標籤</h3>
+                <div class="code-block" data-lang="HTML">
+                    <pre>&lt;!-- 標題標籤 (h1 到 h6) --&gt;
+&lt;h1&gt;最大的標題&lt;/h1&gt;
+&lt;h2&gt;次標題&lt;/h2&gt;
+
+&lt;!-- 段落和文字格式 --&gt;
+&lt;p&gt;這是一個段落&lt;/p&gt;
+&lt;strong&gt;粗體文字&lt;/strong&gt;
+&lt;em&gt;斜體文字&lt;/em&gt;
+
+&lt;!-- 清單 --&gt;
+&lt;ul&gt;
+    &lt;li&gt;無序清單項目 1&lt;/li&gt;
+    &lt;li&gt;無序清單項目 2&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;!-- 連結和圖片 --&gt;
+&lt;a href="https://example.com"&gt;這是一個連結&lt;/a&gt;
+&lt;img src="image.jpg" alt="圖片描述"&gt;
+
+&lt;!-- 表單元素 --&gt;
+&lt;form&gt;
+    &lt;input type="text" placeholder="輸入文字"&gt;
+    &lt;button type="submit"&gt;送出&lt;/button&gt;
+&lt;/form&gt;</pre>
+                </div>
+
+                <div class="hint-box">
+                    <h4>💡 尋找 FLAG 的技巧</h4>
+                    <p>HTML 註解使用 <code>&lt;!-- 註解內容 --&gt;</code> 的格式。按下 Ctrl+U (或 Cmd+U) 可以檢視完整的網頁原始碼，包括所有註解！</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="css" class="content-section">
+            <div class="card">
+                <h2>🎨 CSS - 階層式樣式表</h2>
+                <p>CSS (Cascading Style Sheets) 負責網頁的外觀和排版，讓網頁變得美觀。</p>
+
+                <h3>CSS 的作用</h3>
+                <p>CSS 可以控制顏色、字型、間距、版面配置、動畫等所有視覺效果。</p>
+
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h4>🎨 美化介面</h4>
+                        <p>設定顏色、字型、邊框等樣式</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📐 版面配置</h4>
+                        <p>使用 Flexbox、Grid 排列元素</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>✨ 動畫效果</h4>
+                        <p>建立過渡效果和關鍵影格動畫</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📱 響應式設計</h4>
+                        <p>透過媒體查詢適應不同螢幕</p>
+                    </div>
+                </div>
+
+                <h3>CSS 選擇器</h3>
+                <div class="code-block" data-lang="CSS">
+                    <pre>/* 元素選擇器 */
+p {
+    color: blue;
+}
+
+/* 類別選擇器 */
+.my-class {
+    font-size: 18px;
+}
+
+/* ID 選擇器 */
+#my-id {
+    background-color: yellow;
+}
+
+/* 組合選擇器 */
+div p {
+    margin: 10px;
+}
+
+/* 偽類選擇器 */
+a:hover {
+    color: red;
+}</pre>
+                </div>
+
+                <h3>常用 CSS 屬性</h3>
+                <div class="code-block" data-lang="CSS">
+                    <pre>/* 文字樣式 */
+.text-style {
+    color: #333;              /* 文字顏色 */
+    font-size: 16px;          /* 字體大小 */
+    font-weight: bold;        /* 字體粗細 */
+    text-align: center;       /* 文字對齊 */
+}
+
+/* 盒子模型 */
+.box-model {
+    width: 200px;             /* 寬度 */
+    height: 100px;            /* 高度 */
+    padding: 20px;            /* 內距 */
+    margin: 10px;             /* 外距 */
+    border: 2px solid black;  /* 邊框 */
+}
+
+/* 背景和裝飾 */
+.decoration {
+    background-color: lightblue;
+    border-radius: 10px;      /* 圓角 */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Flexbox 排版 */
+.flex-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}</pre>
+                </div>
+
+                <div class="demo-area">
+                    <h3>🎪 互動式範例</h3>
+                    <button class="tab" onclick="applyStyle()">點我套用樣式</button>
+                    <div class="demo-result" id="cssDemo">
+                        <p>這個文字會被 CSS 美化！</p>
+                    </div>
+                </div>
+
+                <div class="hint-box">
+                    <h4>💡 CSS 註解藏在哪裡？</h4>
+                    <p>CSS 註解使用 <code>/* 註解內容 */</code> 的格式。檢視原始碼時，注意 &lt;style&gt; 標籤內的註解部分！</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="js" class="content-section">
+            <div class="card">
+                <h2>⚡ JavaScript - 網頁的大腦</h2>
+                <p>JavaScript 讓網頁能夠互動，處理使用者操作、動態更新內容、與伺服器通訊。</p>
+
+                <h3>JavaScript 的能力</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h4>🖱️ 事件處理</h4>
+                        <p>回應使用者的點擊、輸入等操作</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🔄 DOM 操作</h4>
+                        <p>動態修改網頁內容和結構</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📡 AJAX 請求</h4>
+                        <p>不重新載入頁面就能取得資料</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>💾 資料處理</h4>
+                        <p>計算、驗證、儲存資料</p>
+                    </div>
+                </div>
+
+                <h3>基本語法</h3>
+                <div class="code-block" data-lang="JavaScript">
+                    <pre>// 這是單行註解
+
+/* 
+   這是多行註解
+   可以寫很多行
+*/
+
+// 變數宣告
+let name = "小明";
+const age = 25;
+var city = "台北";  // 舊式寫法
+
+// 函式定義
+function greet(name) {
+    return "你好，" + name + "！";
+}
+
+// 箭頭函式
+const add = (a, b) => a + b;
+
+// 條件判斷
+if (age >= 18) {
+    console.log("成年人");
+} else {
+    console.log("未成年");
+}
+
+// 迴圈
+for (let i = 0; i < 5; i++) {
+    console.log(i);
+}</pre>
+                </div>
+
+                <h3>DOM 操作範例</h3>
+                <div class="code-block" data-lang="JavaScript">
+                    <pre>// 取得元素
+const element = document.getElementById("myId");
+const elements = document.querySelectorAll(".myClass");
+
+// 修改內容
+element.textContent = "新的文字";
+element.innerHTML = "&lt;strong&gt;粗體文字&lt;/strong&gt;";
+
+// 修改樣式
+element.style.color = "blue";
+element.style.fontSize = "20px";
+
+// 新增事件監聽
+element.addEventListener("click", function() {
+    alert("被點擊了！");
+});
+
+// 建立新元素
+const newDiv = document.createElement("div");
+newDiv.textContent = "新的 div";
+document.body.appendChild(newDiv);</pre>
+                </div>
+
+                <div class="demo-area">
+                    <h3>🎮 互動式範例</h3>
+                    <button class="tab" onclick="runJsDemo()">執行 JavaScript</button>
+                    <div class="demo-result" id="jsDemo">
+                        <p>點擊按鈕看看會發生什麼事！</p>
+                    </div>
+                </div>
+
+                <div class="hint-box">
+                    <h4>💡 JavaScript 註解在哪？</h4>
+                    <p>JavaScript 註解有兩種：<code>// 單行註解</code> 和 <code>/* 多行註解 */</code>。檢查 &lt;script&gt; 標籤內的程式碼！</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="integration" class="content-section">
+            <div class="card">
+                <h2>🔗 HTML + CSS + JavaScript 整合</h2>
+                <p>三種技術協同工作，打造完整的網頁應用程式。</p>
+
+                <h3>分工合作</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h4>📄 HTML</h4>
+                        <p><strong>職責：</strong>內容結構<br>
+                        <strong>比喻：</strong>房子的骨架和牆壁</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🎨 CSS</h4>
+                        <p><strong>職責：</strong>視覺呈現<br>
+                        <strong>比喻：</strong>裝潢和家具擺設</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>⚡ JS</h4>
+                        <p><strong>職責：</strong>互動邏輯<br>
+                        <strong>比喻：</strong>電器和智慧家居系統</p>
+                    </div>
+                </div>
+
+                <h3>完整範例：計數器</h3>
+                <div class="code-block" data-lang="HTML">
+                    <pre>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;style&gt;
+        /* CSS: 美化計數器 */
+        .counter {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5d652, #cfe867);
+            border-radius: 15px;
+        }
+        .count {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;!-- HTML: 定義結構 --&gt;
+    &lt;div class="counter"&gt;
+        &lt;h2&gt;計數器&lt;/h2&gt;
+        &lt;div class="count" id="count"&gt;0&lt;/div&gt;
+        &lt;button onclick="increment()"&gt;增加&lt;/button&gt;
+        &lt;button onclick="decrement()"&gt;減少&lt;/button&gt;
+        &lt;button onclick="reset()"&gt;重設&lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        // JavaScript: 實作功能
+        let count = 0;
+        
+        function increment() {
+            count++;
+            updateDisplay();
+        }
+        
+        function decrement() {
+            count--;
+            updateDisplay();
+        }
+        
+        function reset() {
+            count = 0;
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            document.getElementById('count').textContent = count;
+        }
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+                </div>
+
+                <h3>🎯 實際運作的計數器</h3>
+                <div class="demo-area" style="text-align: center;">
+                    <div style="font-size: 3em; font-weight: bold; margin: 20px 0;" id="liveCount">0</div>
+                    <button class="tab" onclick="liveIncrement()">增加</button>
+                    <button class="tab" onclick="liveDecrement()">減少</button>
+                    <button class="tab" onclick="liveReset()">重設</button>
+                </div>
+
+                <h3>前後端分工</h3>
+                <div class="code-block" data-lang="概念">
+                    <pre>前端 (Frontend):
+├── HTML: 網頁結構
+├── CSS: 視覺設計
+└── JavaScript: 使用者互動
+
+後端 (Backend):
+├── 伺服器程式: Node.js, Python, Java, PHP
+├── 資料庫: MySQL, MongoDB, PostgreSQL
+├── API: 提供資料給前端
+└── 商業邏輯: 處理核心功能
+
+前後端溝通:
+└── HTTP/HTTPS: 使用 AJAX、Fetch API 交換資料</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+
+
+    
+</body>
+</html>

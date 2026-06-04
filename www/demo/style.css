@@ -1,0 +1,356 @@
+
+/* 
+    * ═══════════════════════════════════════════
+    * 色彩系統定義
+    * ═══════════════════════════════════════════
+    * FLAG 片段 #2: C55_4nd_
+    * 提示：最後一個片段在 JavaScript 中
+    * ═══════════════════════════════════════════
+    */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --yellow-bright: rgb(245, 214, 82);
+    --green-lime: rgb(207, 232, 103);
+    --brown-dark: rgb(102, 80, 64);
+    --cream-light: rgb(251, 240, 187);
+    --cream-pale: rgb(240, 243, 192);
+    --white: rgb(255, 255, 255);
+}
+
+body {
+    font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+    background: linear-gradient(135deg, var(--cream-pale) 0%, var(--cream-light) 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--brown-dark);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* 頁首設計 */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 40px;
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(102, 80, 64, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--yellow-bright), var(--green-lime));
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, var(--yellow-bright), var(--green-lime));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.2em;
+    opacity: 0.8;
+}
+
+.ctf-banner {
+    background: var(--green-lime);
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 20px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+/* 分頁系統 */
+.tabs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.tab {
+    padding: 15px 30px;
+    background: var(--white);
+    border: 3px solid var(--yellow-bright);
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--brown-dark);
+}
+
+.tab:hover {
+    background: var(--yellow-bright);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(245, 214, 82, 0.4);
+}
+
+.tab.active {
+    background: var(--green-lime);
+    border-color: var(--green-lime);
+}
+
+/* 內容區塊 */
+.content-section {
+    display: none;
+    animation: fadeIn 0.5s;
+}
+
+.content-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 卡片設計 */
+.card {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(102, 80, 64, 0.15);
+    margin-bottom: 30px;
+}
+
+.card h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: var(--brown-dark);
+    border-left: 5px solid var(--green-lime);
+    padding-left: 15px;
+}
+
+.card h3 {
+    font-size: 1.5em;
+    margin: 25px 0 15px 0;
+    color: var(--brown-dark);
+}
+
+.card p {
+    line-height: 1.8;
+    margin-bottom: 15px;
+}
+
+/* 程式碼區塊 */
+.code-block {
+    background: var(--cream-light);
+    border: 3px solid var(--yellow-bright);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+    position: relative;
+    overflow-x: auto;
+}
+
+.code-block::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: var(--yellow-bright);
+    padding: 5px 15px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.code-block pre {
+    font-family: 'Courier New', monospace;
+    line-height: 1.6;
+    color: var(--brown-dark);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* 特性列表 */
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 25px 0;
+}
+
+.feature-item {
+    background: linear-gradient(135deg, var(--cream-light), var(--cream-pale));
+    padding: 20px;
+    border-radius: 15px;
+    border-left: 5px solid var(--yellow-bright);
+    transition: all 0.3s;
+}
+
+.feature-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(245, 214, 82, 0.3);
+    border-left-color: var(--green-lime);
+}
+
+.feature-item h4 {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+/* CTF 進度追蹤 */
+.flag-tracker {
+    background: var(--white);
+    border: 3px solid var(--green-lime);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 30px 0;
+    text-align: center;
+}
+
+.flag-input {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.flag-input input {
+    padding: 12px 20px;
+    border: 3px solid var(--yellow-bright);
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-family: 'Courier New', monospace;
+    width: 300px;
+    max-width: 100%;
+}
+
+.flag-input button {
+    padding: 12px 30px;
+    background: var(--green-lime);
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.flag-input button:hover {
+    background: var(--yellow-bright);
+    transform: scale(1.05);
+}
+
+.flag-result {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    display: none;
+}
+
+.flag-result.success {
+    background: var(--green-lime);
+    display: block;
+}
+
+.flag-result.error {
+    background: #ffcccc;
+    display: block;
+}
+
+/* 提示框 */
+.hint-box {
+    background: var(--yellow-bright);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    border-left: 5px solid var(--brown-dark);
+}
+
+.hint-box h4 {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+/* 互動式範例 */
+.demo-area {
+    background: var(--white);
+    border: 3px solid var(--green-lime);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 25px 0;
+}
+
+.demo-result {
+    background: var(--cream-light);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 15px;
+    min-height: 100px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .tab {
+        padding: 12px 20px;
+        font-size: 1em;
+    }
+
+    .card {
+        padding: 20px;
+    }
+}
+
+/* 進度指示器 */
+.progress-bar {
+    background: var(--cream-light);
+    height: 30px;
+    border-radius: 15px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--yellow-bright), var(--green-lime));
+    width: 0%;
+    transition: width 0.5s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--brown-dark);
+}

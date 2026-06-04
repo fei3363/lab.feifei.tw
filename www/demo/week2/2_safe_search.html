@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜尋頁面 - 安全版本（已修復 XSS）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #155724;
+        }
+        
+        .success strong {
+            color: #28a745;
+        }
+        
+        h1 {
+            color: #11998e;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #11998e;
+        }
+        
+        button {
+            padding: 15px 30px;
+            background: #11998e;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #0e8074;
+        }
+        
+        .result {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 100px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .result-content {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        
+        .code-block .comment {
+            color: #75715e;
+        }
+        
+        .code-block .keyword {
+            color: #f92672;
+        }
+        
+        .code-block .function {
+            color: #66d9ef;
+        }
+        
+        .code-block .string {
+            color: #e6db74;
+        }
+        
+        .defense-list {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        
+        .defense-list h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .defense-list li {
+            margin-left: 20px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success">
+            <strong>✅ 安全：</strong> 這是已修復 XSS 漏洞的安全網頁！
+        </div>
+        
+        <h1>🔍 搜尋頁面</h1>
+        <p class="subtitle">已修復 XSS 漏洞的安全版本</p>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="請輸入搜尋關鍵字..." />
+            <button onclick="search()">搜尋</button>
+        </div>
+        
+        <div class="result" id="result">
+            <div class="result-title">搜尋結果：</div>
+            <div class="result-content" id="resultContent"></div>
+        </div>
+        
+        <div class="code-block">
+<span class="comment">// 安全的程式碼（已修復 XSS）</span>
+<span class="keyword">function</span> <span class="function">escapeHtml</span>(text) {
+    <span class="keyword">var</span> map = {
+        <span class="string">'&'</span>: <span class="string">'&amp;'</span>,
+        <span class="string">'&lt;'</span>: <span class="string">'&amp;lt;'</span>,
+        <span class="string">'&gt;'</span>: <span class="string">'&amp;gt;'</span>,
+        <span class="string">'"'</span>: <span class="string">'&amp;quot;'</span>,
+        <span class="string">"'"</span>: <span class="string">'&amp;#039;'</span>
+    };
+    <span class="keyword">return</span> text.replace(<span class="string">/[&<>"']/g</span>, <span class="keyword">function</span>(m) { <span class="keyword">return</span> map[m]; });
+}
+
+<span class="keyword">function</span> <span class="function">search</span>() {
+    <span class="keyword">var</span> keyword = document.getElementById(<span class="string">'searchInput'</span>).value;
+    <span class="keyword">var</span> result = document.getElementById(<span class="string">'resultContent'</span>);
+    
+    <span class="comment">// ✅ 安全！先進行 HTML 編碼再顯示</span>
+    <span class="keyword">var</span> safeKeyword = escapeHtml(keyword);
+    result.<span class="keyword">innerHTML</span> = <span class="string">'你搜尋了：&lt;strong&gt;'</span> + safeKeyword + <span class="string">'&lt;/strong&gt;'</span>;
+}
+        </div>
+        
+        <div class="defense-list">
+            <h3>🛡️ 防禦措施：</h3>
+            <ul>
+                <li><strong>HTML 編碼：</strong>將特殊字元轉換為 HTML 實體</li>
+                <li><strong>輸入驗證：</strong>檢查並過濾不合法的輸入</li>
+                <li><strong>使用 textContent：</strong>對於純文字可使用 textContent 代替 innerHTML</li>
+                <li><strong>CSP 政策：</strong>設定 Content-Security-Policy 限制腳本執行</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 10px; font-size: 14px;">
+            <strong>🧪 現在測試看看：</strong><br>
+            即使輸入惡意腳本，也不會被執行，而是顯示為純文字！
+        </div>
+    </div>
+    
+    <script>
+        // HTML 編碼函數 - 防止 XSS
+        function escapeHtml(text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+        
+        // 安全的搜尋函數
+        function search() {
+            var keyword = document.getElementById('searchInput').value;
+            var result = document.getElementById('resultContent');
+            
+            // ✅ 安全做法：先進行 HTML 編碼
+            var safeKeyword = escapeHtml(keyword);
+            result.innerHTML = '你搜尋了：<strong>' + safeKeyword + '</strong>';
+            
+            document.getElementById('result').classList.add('show');
+        }
+        
+        // 按下 Enter 鍵也可以搜尋
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+    </script>
+</body>
+</html>

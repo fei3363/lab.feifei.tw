@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一課：SQL 基礎與 CRUD 操作</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .left-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .right-panel {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .sql-editor {
+            background: #1e1e1e;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .sql-editor textarea {
+            width: 100%;
+            min-height: 120px;
+            background: #2d2d2d;
+            color: #d4d4d4;
+            border: none;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border-radius: 5px;
+            resize: vertical;
+        }
+
+        .sql-editor textarea:focus {
+            outline: 2px solid #667eea;
+        }
+
+        .sql-editor-header {
+            color: white;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .database-status {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 1024px) {
+            .two-column-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .right-panel {
+                position: relative;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 第一課：SQL 基礎與 CRUD 操作</h1>
+            <p class="subtitle">從建立資料庫開始，學習 SQL 的完整流程</p>
+        </header>
+
+        <div class="nav-bar">
+            <a href="index.html" class="nav-btn">🏠 回首頁</a>
+            <a href="page2-injection-basic.html" class="nav-btn">下一課 ➡️</a>
+        </div>
+
+        <div class="explanation-box">
+            <h3>💡 學習目標</h3>
+            <p>在這一課中，你將學會：</p>
+            <ul>
+                <li>🗄️ 建立資料庫與資料表</li>
+                <li>➕ 新增資料 (INSERT)</li>
+                <li>🔍 查詢資料 (SELECT)</li>
+                <li>✏️ 更新資料 (UPDATE)</li>
+                <li>🗑️ 刪除資料 (DELETE)</li>
+                <li>⚡ 直接執行 SQL 指令</li>
+            </ul>
+        </div>
+
+        <div class="two-column-layout">
+            <!-- 左側：操作區域 -->
+            <div class="left-panel">
+                <!-- 步驟 0：建立資料庫與資料表 -->
+                <div class="demo-section">
+                    <h2>🗄️ 步驟 0：建立資料庫與資料表</h2>
+
+                    <div class="explanation-box">
+                        <h3>💡 什麼是資料庫與資料表？</h3>
+                        <p><strong>資料庫 (Database)</strong>：用來儲存資料的容器，就像一個大檔案櫃</p>
+                        <p><strong>資料表 (Table)</strong>：資料庫中的表格，用來組織和儲存具體的資料</p>
+                    </div>
+
+                    <h3>1. 建立資料庫</h3>
+                    <div class="input-group">
+                        <label>資料庫名稱：</label>
+                        <input type="text" id="db-name" value="myapp_db" placeholder="輸入資料庫名稱">
+                    </div>
+                    <button class="btn btn-success" onclick="createDatabase()">建立資料庫</button>
+
+                    <div class="code-display" id="create-db-sql">
+                        點擊「建立資料庫」按鈕查看 SQL 指令
+                    </div>
+
+                    <h3 style="margin-top: 30px;">2. 建立資料表</h3>
+                    <div class="explanation-box">
+                        <p>資料表需要定義欄位（欄位名稱和資料型別）</p>
+                        <p>常見的資料型別：</p>
+                        <ul>
+                            <li><code>INT</code> - 整數</li>
+                            <li><code>VARCHAR(長度)</code> - 文字</li>
+                            <li><code>TEXT</code> - 長文字</li>
+                            <li><code>DATE</code> - 日期</li>
+                        </ul>
+                    </div>
+
+                    <div class="input-group">
+                        <label>資料表名稱：</label>
+                        <input type="text" id="table-name" value="users" placeholder="輸入資料表名稱">
+                    </div>
+
+                    <button class="btn btn-success" onclick="createTable()">建立 users 資料表</button>
+
+                    <div class="code-display" id="create-table-sql">
+                        點擊「建立 users 資料表」按鈕查看 SQL 指令
+                    </div>
+
+                    <div class="explanation-box">
+                        <h3>📝 CREATE TABLE 指令說明</h3>
+                        <p><code>CREATE TABLE</code> 用來建立新的資料表。</p>
+                        <p>語法：</p>
+                        <pre style="background: #2d2d2d; color: #f8f8f2; padding: 10px; border-radius: 5px; overflow-x: auto;">
+CREATE TABLE 資料表名稱 (
+    欄位1 資料型別 [約束],
+    欄位2 資料型別 [約束],
+    ...
+)</pre>
+                        <p>常見約束：</p>
+                        <ul>
+                            <li><code>PRIMARY KEY</code> - 主鍵（唯一識別）</li>
+                            <li><code>AUTO_INCREMENT</code> - 自動遞增</li>
+                            <li><code>NOT NULL</code> - 不可為空</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- SQL 編輯器 -->
+                <div class="demo-section">
+                    <h2>⚡ SQL 指令編輯器</h2>
+
+                    <div class="warning-box">
+                        <h3>💡 直接執行 SQL 指令</h3>
+                        <p>在這裡你可以直接輸入並執行 SQL 指令，體驗真實的資料庫操作！</p>
+                        <p>試試看這些範例：</p>
+                        <ul>
+                            <li><code>SELECT * FROM users</code></li>
+                            <li><code>INSERT INTO users (username, email, age) VALUES ('小美', 'mei@test.com', 22)</code></li>
+                            <li><code>UPDATE users SET age = 30 WHERE id = 1</code></li>
+                            <li><code>DELETE FROM users WHERE id = 2</code></li>
+                        </ul>
+                    </div>
+
+                    <div class="sql-editor">
+                        <div class="sql-editor-header">
+                            <span>📝 輸入 SQL 指令</span>
+                            <button class="btn btn-success" style="padding: 5px 15px; font-size: 0.9em;" onclick="executeCustomSQL()">執行 ▶</button>
+                        </div>
+                        <textarea id="custom-sql" placeholder="輸入 SQL 指令，例如：SELECT * FROM users">SELECT * FROM users</textarea>
+                    </div>
+
+                    <div class="result-display" id="custom-result">
+                        執行結果會顯示在這裡
+                    </div>
+                </div>
+
+                <!-- CRUD 操作 -->
+                <div class="demo-section">
+                    <h2>➕ CREATE - 新增資料 (INSERT)</h2>
+
+                    <div class="input-group">
+                        <label>使用者名稱：</label>
+                        <input type="text" id="create-username" placeholder="例如：小明" value="小明">
+                    </div>
+
+                    <div class="input-group">
+                        <label>電子郵件：</label>
+                        <input type="text" id="create-email" placeholder="例如：ming@example.com" value="ming@example.com">
+                    </div>
+
+                    <div class="input-group">
+                        <label>年齡：</label>
+                        <input type="number" id="create-age" placeholder="例如：25" value="25">
+                    </div>
+
+                    <button class="btn btn-success" onclick="createUser()">新增使用者</button>
+
+                    <div class="code-display" id="create-sql">
+                        點擊「新增使用者」按鈕，這裡會顯示 SQL 指令
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h2>🔍 READ - 查詢資料 (SELECT)</h2>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="selectAll()">查詢所有使用者</button>
+                        <button class="btn btn-primary" onclick="selectById()">依 ID 查詢</button>
+                        <button class="btn btn-primary" onclick="selectByCondition()">條件查詢</button>
+                    </div>
+
+                    <div id="select-inputs" style="display: none; margin-top: 15px;">
+                        <div class="input-group">
+                            <label id="select-label">請輸入條件：</label>
+                            <input type="text" id="select-value" placeholder="請輸入值">
+                        </div>
+                        <button class="btn btn-success" onclick="executeSelect()">執行查詢</button>
+                    </div>
+
+                    <div class="code-display" id="select-sql">
+                        點擊查詢按鈕，這裡會顯示 SQL 指令
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h2>✏️ UPDATE - 更新資料</h2>
+
+                    <div class="input-group">
+                        <label>選擇要更新的使用者 ID：</label>
+                        <input type="number" id="update-id" placeholder="例如：1" value="1">
+                    </div>
+
+                    <div class="input-group">
+                        <label>新的使用者名稱：</label>
+                        <input type="text" id="update-username" placeholder="例如：小華">
+                    </div>
+
+                    <div class="input-group">
+                        <label>新的電子郵件：</label>
+                        <input type="text" id="update-email" placeholder="例如：hua@example.com">
+                    </div>
+
+                    <button class="btn btn-warning" onclick="updateUser()">更新使用者資料</button>
+
+                    <div class="code-display" id="update-sql">
+                        點擊「更新使用者資料」按鈕，這裡會顯示 SQL 指令
+                    </div>
+                </div>
+
+                <div class="demo-section">
+                    <h2>🗑️ DELETE - 刪除資料</h2>
+
+                    <div class="input-group">
+                        <label>選擇要刪除的使用者 ID：</label>
+                        <input type="number" id="delete-id" placeholder="例如：1" value="1">
+                    </div>
+
+                    <button class="btn btn-danger" onclick="deleteUser()">刪除使用者</button>
+
+                    <div class="code-display" id="delete-sql">
+                        點擊「刪除使用者」按鈕，這裡會顯示 SQL 指令
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：資料庫即時狀態 -->
+            <div class="right-panel">
+                <!-- 資料庫狀態 -->
+                <div class="database-status">
+                    <h3>🗄️ 資料庫狀態</h3>
+                    <div style="margin: 15px 0;">
+                        <strong>資料庫：</strong>
+                        <span class="status-badge inactive" id="db-status">尚未建立</span>
+                        <span id="db-name-display"></span>
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <strong>資料表：</strong>
+                        <span class="status-badge inactive" id="table-status">尚未建立</span>
+                        <span id="table-name-display"></span>
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <strong>資料筆數：</strong>
+                        <span id="record-count" style="font-size: 1.5em; color: #667eea; font-weight: bold;">0</span> 筆
+                    </div>
+                </div>
+
+                <!-- 資料表視覺化 -->
+                <div class="database-visual">
+                    <h3>💾 資料表即時內容</h3>
+                    <div id="no-table-message" style="padding: 40px; text-align: center; color: #999;">
+                        <div style="font-size: 3em;">📋</div>
+                        <p>請先建立資料庫與資料表</p>
+                    </div>
+                    <div id="table-view" style="display: none;">
+                        <div class="table-container">
+                            <table id="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>使用者名稱</th>
+                                        <th>電子郵件</th>
+                                        <th>年齡</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 執行結果 -->
+                <div class="result-display" id="result" style="margin-top: 20px;">
+                    執行 SQL 指令後，這裡會顯示結果
+                </div>
+            </div>
+        </div>
+
+        <div class="success-box">
+            <h3>✅ 恭喜完成第一課！</h3>
+            <p>你已經學會了：</p>
+            <ul>
+                <li>✓ 建立資料庫與資料表</li>
+                <li>✓ SQL 的四大基本操作（新增、查詢、更新、刪除）</li>
+                <li>✓ 直接執行 SQL 指令</li>
+            </ul>
+            <p>下一課我們將學習 SQL Injection 的原理與危險性。</p>
+            <a href="page2-injection-basic.html" class="btn btn-primary">前往第二課</a>
+        </div>
+
+        <footer>
+            <p>💡 提示：試著在 SQL 編輯器中輸入不同的指令，觀察資料庫的變化</p>
+        </footer>
+    </div>
+
+    <script>
+        // 模擬資料庫狀態
+        let databaseCreated = false;
+        let tableCreated = false;
+        let databaseName = '';
+        let tableName = '';
+        let database = [];
+        let nextId = 1;
+
+        // 更新狀態顯示
+        function updateStatus() {
+            if (databaseCreated) {
+                document.getElementById('db-status').className = 'status-badge active';
+                document.getElementById('db-status').textContent = '已建立';
+                document.getElementById('db-name-display').textContent = ` (${databaseName})`;
+            }
+
+            if (tableCreated) {
+                document.getElementById('table-status').className = 'status-badge active';
+                document.getElementById('table-status').textContent = '已建立';
+                document.getElementById('table-name-display').textContent = ` (${tableName})`;
+                document.getElementById('no-table-message').style.display = 'none';
+                document.getElementById('table-view').style.display = 'block';
+            }
+
+            document.getElementById('record-count').textContent = database.length;
+        }
+
+        // 建立資料庫
+        function createDatabase() {
+            databaseName = document.getElementById('db-name').value || 'myapp_db';
+            const sql = `CREATE DATABASE ${databaseName}`;
+
+            document.getElementById('create-db-sql').innerHTML = formatSQL(sql);
+            databaseCreated = true;
+            updateStatus();
+
+            document.getElementById('result').className = 'result-display success';
+            document.getElementById('result').innerHTML = `
+                <strong>✅ 資料庫建立成功！</strong><br>
+                已建立資料庫「${databaseName}」<br>
+                現在可以在這個資料庫中建立資料表了
+            `;
+        }
+
+        // 建立資料表
+        function createTable() {
+            if (!databaseCreated) {
+                alert('請先建立資料庫！');
+                return;
+            }
+
+            tableName = document.getElementById('table-name').value || 'users';
+            const sql = `CREATE TABLE ${tableName} (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    age INT
+)`;
+
+            document.getElementById('create-table-sql').innerHTML = formatSQL(sql);
+            tableCreated = true;
+            updateStatus();
+
+            document.getElementById('result').className = 'result-display success';
+            document.getElementById('result').innerHTML = `
+                <strong>✅ 資料表建立成功！</strong><br>
+                已在資料庫「${databaseName}」中建立資料表「${tableName}」<br><br>
+                <strong>資料表結構：</strong><br>
+                • id - 整數，主鍵，自動遞增<br>
+                • username - 文字(50)，不可為空<br>
+                • email - 文字(100)，不可為空<br>
+                • age - 整數<br><br>
+                現在可以開始新增資料了！
+            `;
+        }
+
+        // 更新資料表顯示
+        function updateTable(highlightId = null) {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '';
+
+            if (database.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999; padding: 20px;">目前沒有資料</td></tr>';
+                return;
+            }
+
+            database.forEach(user => {
+                const row = tbody.insertRow();
+                if (highlightId === user.id) {
+                    row.className = 'table-highlight';
+                }
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>${user.age}</td>
+                `;
+            });
+
+            updateStatus();
+        }
+
+        // 格式化 SQL 顯示
+        function formatSQL(sql) {
+            sql = sql.replace(/\b(SELECT|FROM|WHERE|INSERT INTO|VALUES|UPDATE|SET|DELETE|AND|OR|CREATE|DATABASE|TABLE|PRIMARY KEY|AUTO_INCREMENT|NOT NULL|INT|VARCHAR|TEXT)\b/g, '<span class="keyword">$1</span>');
+            sql = sql.replace(/'([^']*)'/g, '<span class="string">\'$1\'</span>');
+            sql = sql.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+            return sql;
+        }
+
+        // 檢查是否可以操作資料
+        function checkTableExists() {
+            if (!tableCreated) {
+                alert('請先建立資料庫與資料表！');
+                return false;
+            }
+            return true;
+        }
+
+        // 執行自訂 SQL
+        function executeCustomSQL() {
+            const sql = document.getElementById('custom-sql').value.trim();
+
+            if (!sql) {
+                alert('請輸入 SQL 指令！');
+                return;
+            }
+
+            const resultDiv = document.getElementById('custom-result');
+            const upperSQL = sql.toUpperCase();
+
+            // 簡單的 SQL 解析
+            if (upperSQL.startsWith('CREATE DATABASE')) {
+                const match = sql.match(/CREATE DATABASE\s+(\w+)/i);
+                if (match) {
+                    databaseName = match[1];
+                    databaseCreated = true;
+                    updateStatus();
+                    resultDiv.className = 'result-display success';
+                    resultDiv.innerHTML = `<strong>✅ 執行成功！</strong><br>建立資料庫「${databaseName}」`;
+                }
+            } else if (upperSQL.startsWith('CREATE TABLE')) {
+                if (!databaseCreated) {
+                    resultDiv.className = 'result-display error';
+                    resultDiv.innerHTML = '<strong>❌ 錯誤！</strong><br>請先建立資料庫';
+                    return;
+                }
+                tableName = 'users';
+                tableCreated = true;
+                updateStatus();
+                resultDiv.className = 'result-display success';
+                resultDiv.innerHTML = '<strong>✅ 執行成功！</strong><br>建立資料表';
+            } else if (upperSQL.startsWith('SELECT')) {
+                if (!checkTableExists()) {
+                    resultDiv.className = 'result-display error';
+                    resultDiv.innerHTML = '<strong>❌ 錯誤！</strong><br>資料表不存在';
+                    return;
+                }
+                updateTable();
+                resultDiv.className = 'result-display success';
+                resultDiv.innerHTML = `<strong>✅ 查詢成功！</strong><br>找到 ${database.length} 筆資料`;
+            } else if (upperSQL.startsWith('INSERT INTO')) {
+                if (!checkTableExists()) {
+                    resultDiv.className = 'result-display error';
+                    resultDiv.innerHTML = '<strong>❌ 錯誤！</strong><br>資料表不存在';
+                    return;
+                }
+                // 簡單解析 INSERT
+                const match = sql.match(/VALUES\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*(\d+)\s*\)/i);
+                if (match) {
+                    const newUser = {
+                        id: nextId++,
+                        username: match[1],
+                        email: match[2],
+                        age: parseInt(match[3])
+                    };
+                    database.push(newUser);
+                    updateTable(newUser.id);
+                    resultDiv.className = 'result-display success';
+                    resultDiv.innerHTML = `<strong>✅ 新增成功！</strong><br>新增了使用者「${newUser.username}」`;
+                }
+            } else if (upperSQL.startsWith('UPDATE')) {
+                if (!checkTableExists()) {
+                    resultDiv.className = 'result-display error';
+                    resultDiv.innerHTML = '<strong>❌ 錯誤！</strong><br>資料表不存在';
+                    return;
+                }
+                resultDiv.className = 'result-display success';
+                resultDiv.innerHTML = '<strong>✅ 更新成功！</strong>';
+                updateTable();
+            } else if (upperSQL.startsWith('DELETE')) {
+                if (!checkTableExists()) {
+                    resultDiv.className = 'result-display error';
+                    resultDiv.innerHTML = '<strong>❌ 錯誤！</strong><br>資料表不存在';
+                    return;
+                }
+                // 簡單解析 DELETE
+                const match = sql.match(/WHERE\s+id\s*=\s*(\d+)/i);
+                if (match) {
+                    const id = parseInt(match[1]);
+                    const index = database.findIndex(u => u.id === id);
+                    if (index !== -1) {
+                        database.splice(index, 1);
+                        updateTable();
+                        resultDiv.className = 'result-display success';
+                        resultDiv.innerHTML = '<strong>✅ 刪除成功！</strong>';
+                    } else {
+                        resultDiv.className = 'result-display error';
+                        resultDiv.innerHTML = '<strong>❌ 找不到該筆資料</strong>';
+                    }
+                }
+            } else {
+                resultDiv.className = 'result-display';
+                resultDiv.innerHTML = '<strong>💡 SQL 指令已接收</strong><br>此為簡化版本，僅支援基本的 CRUD 操作';
+            }
+        }
+
+        // CREATE - 新增使用者
+        function createUser() {
+            if (!checkTableExists()) return;
+
+            const username = document.getElementById('create-username').value;
+            const email = document.getElementById('create-email').value;
+            const age = document.getElementById('create-age').value;
+
+            if (!username || !email || !age) {
+                alert('請填寫所有欄位！');
+                return;
+            }
+
+            const sql = `INSERT INTO ${tableName} (username, email, age) VALUES ('${username}', '${email}', ${age})`;
+            document.getElementById('create-sql').innerHTML = formatSQL(sql);
+
+            const newUser = {
+                id: nextId++,
+                username: username,
+                email: email,
+                age: parseInt(age)
+            };
+            database.push(newUser);
+            updateTable(newUser.id);
+
+            document.getElementById('result').className = 'result-display success';
+            document.getElementById('result').innerHTML = `
+                <strong>✅ 新增成功！</strong><br>
+                新增了使用者「${username}」，ID 為 ${newUser.id}
+            `;
+        }
+
+        // READ - 查詢所有使用者
+        function selectAll() {
+            if (!checkTableExists()) return;
+
+            const sql = `SELECT * FROM ${tableName}`;
+            document.getElementById('select-sql').innerHTML = formatSQL(sql);
+            document.getElementById('select-inputs').style.display = 'none';
+
+            updateTable();
+            document.getElementById('result').className = 'result-display success';
+            document.getElementById('result').innerHTML = `
+                <strong>✅ 查詢成功！</strong><br>
+                共找到 ${database.length} 筆使用者資料
+            `;
+        }
+
+        // READ - 依 ID 查詢
+        function selectById() {
+            if (!checkTableExists()) return;
+            document.getElementById('select-inputs').style.display = 'block';
+            document.getElementById('select-label').textContent = '請輸入使用者 ID：';
+            document.getElementById('select-value').placeholder = '例如：1';
+            document.getElementById('select-value').value = '';
+            window.currentSelectType = 'id';
+        }
+
+        // READ - 條件查詢
+        function selectByCondition() {
+            if (!checkTableExists()) return;
+            document.getElementById('select-inputs').style.display = 'block';
+            document.getElementById('select-label').textContent = '請輸入使用者名稱：';
+            document.getElementById('select-value').placeholder = '例如：張三';
+            document.getElementById('select-value').value = '';
+            window.currentSelectType = 'condition';
+        }
+
+        // 執行查詢
+        function executeSelect() {
+            const value = document.getElementById('select-value').value;
+
+            if (!value) {
+                alert('請輸入查詢值！');
+                return;
+            }
+
+            let sql, results;
+
+            if (window.currentSelectType === 'id') {
+                sql = `SELECT * FROM ${tableName} WHERE id = ${value}`;
+                results = database.filter(u => u.id === parseInt(value));
+            } else {
+                sql = `SELECT * FROM ${tableName} WHERE username = '${value}'`;
+                results = database.filter(u => u.username === value);
+            }
+
+            document.getElementById('select-sql').innerHTML = formatSQL(sql);
+            updateTable(results.length > 0 ? results[0].id : null);
+
+            if (results.length > 0) {
+                document.getElementById('result').className = 'result-display success';
+                document.getElementById('result').innerHTML = `
+                    <strong>✅ 查詢成功！</strong><br>
+                    找到 ${results.length} 筆符合條件的資料（已在表格中標示）
+                `;
+            } else {
+                document.getElementById('result').className = 'result-display error';
+                document.getElementById('result').innerHTML = `
+                    <strong>❌ 查詢結果為空</strong><br>
+                    找不到符合條件的使用者
+                `;
+            }
+        }
+
+        // UPDATE - 更新使用者
+        function updateUser() {
+            if (!checkTableExists()) return;
+
+            const id = parseInt(document.getElementById('update-id').value);
+            const username = document.getElementById('update-username').value;
+            const email = document.getElementById('update-email').value;
+
+            if (!id) {
+                alert('請輸入使用者 ID！');
+                return;
+            }
+
+            const user = database.find(u => u.id === id);
+            if (!user) {
+                document.getElementById('result').className = 'result-display error';
+                document.getElementById('result').innerHTML = `
+                    <strong>❌ 更新失敗！</strong><br>
+                    找不到 ID 為 ${id} 的使用者
+                `;
+                return;
+            }
+
+            const updates = [];
+
+            if (username) {
+                updates.push(`username = '${username}'`);
+                user.username = username;
+            }
+            if (email) {
+                updates.push(`email = '${email}'`);
+                user.email = email;
+            }
+
+            if (updates.length === 0) {
+                alert('請至少填寫一個要更新的欄位！');
+                return;
+            }
+
+            const sql = `UPDATE ${tableName} SET ${updates.join(', ')} WHERE id = ${id}`;
+            document.getElementById('update-sql').innerHTML = formatSQL(sql);
+
+            updateTable(id);
+            document.getElementById('result').className = 'result-display success';
+            document.getElementById('result').innerHTML = `
+                <strong>✅ 更新成功！</strong><br>
+                已更新 ID 為 ${id} 的使用者資料（已在表格中標示）
+            `;
+        }
+
+        // DELETE - 刪除使用者
+        function deleteUser() {
+            if (!checkTableExists()) return;
+
+            const id = parseInt(document.getElementById('delete-id').value);
+
+            if (!id) {
+                alert('請輸入使用者 ID！');
+                return;
+            }
+
+            const sql = `DELETE FROM ${tableName} WHERE id = ${id}`;
+            document.getElementById('delete-sql').innerHTML = formatSQL(sql);
+
+            const index = database.findIndex(u => u.id === id);
+
+            if (index !== -1) {
+                const deletedUser = database[index];
+                database.splice(index, 1);
+                updateTable();
+
+                document.getElementById('result').className = 'result-display success';
+                document.getElementById('result').innerHTML = `
+                    <strong>✅ 刪除成功！</strong><br>
+                    已刪除使用者「${deletedUser.username}」（ID: ${id}）
+                `;
+            } else {
+                document.getElementById('result').className = 'result-display error';
+                document.getElementById('result').innerHTML = `
+                    <strong>❌ 刪除失敗！</strong><br>
+                    找不到 ID 為 ${id} 的使用者
+                `;
+            }
+        }
+
+        // 初始化
+        updateStatus();
+        updateTable();
+    </script>
+</body>
+</html>

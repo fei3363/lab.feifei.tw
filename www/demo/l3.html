@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後端開發與 API 實戰 - FLAG Hunt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --yellow-bright: rgb(245, 214, 82);
+            --green-lime: rgb(207, 232, 103);
+            --brown-dark: rgb(102, 80, 64);
+            --cream-light: rgb(251, 240, 187);
+            --cream-pale: rgb(240, 243, 192);
+            --white: rgb(255, 255, 255);
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background: linear-gradient(135deg, var(--cream-pale) 0%, var(--cream-light) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--brown-dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(102, 80, 64, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, var(--yellow-bright), var(--green-lime));
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--yellow-bright), var(--green-lime));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+
+        .mission-banner {
+            background: linear-gradient(135deg, var(--yellow-bright), var(--green-lime));
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: var(--white);
+            border: 3px solid var(--yellow-bright);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--brown-dark);
+        }
+
+        .tab:hover {
+            background: var(--yellow-bright);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(245, 214, 82, 0.4);
+        }
+
+        .tab.active {
+            background: var(--green-lime);
+            border-color: var(--green-lime);
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(102, 80, 64, 0.15);
+            margin-bottom: 30px;
+        }
+
+        .card h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: var(--brown-dark);
+            border-left: 5px solid var(--green-lime);
+            padding-left: 15px;
+        }
+
+        .card h3 {
+            font-size: 1.5em;
+            margin: 25px 0 15px 0;
+            color: var(--brown-dark);
+        }
+
+        .card p {
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .code-block {
+            background: var(--cream-light);
+            border: 3px solid var(--yellow-bright);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: var(--yellow-bright);
+            padding: 5px 15px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .code-block pre {
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            color: var(--brown-dark);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .feature-item {
+            background: linear-gradient(135deg, var(--cream-light), var(--cream-pale));
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid var(--yellow-bright);
+            transition: all 0.3s;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(245, 214, 82, 0.3);
+            border-left-color: var(--green-lime);
+        }
+
+        .feature-item h4 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .api-playground {
+            background: var(--white);
+            border: 3px solid var(--green-lime);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .api-endpoint {
+            background: var(--cream-light);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 5px solid var(--yellow-bright);
+        }
+
+        .api-endpoint h4 {
+            color: var(--brown-dark);
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .endpoint-url {
+            background: var(--brown-dark);
+            color: var(--yellow-bright);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .btn-primary {
+            background: var(--green-lime);
+            color: var(--brown-dark);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 5px;
+        }
+
+        .btn-primary:hover {
+            background: var(--yellow-bright);
+            transform: scale(1.05);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .response-box {
+            background: var(--brown-dark);
+            color: var(--green-lime);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .response-box .header-section {
+            color: var(--yellow-bright);
+            font-weight: bold;
+        }
+
+        .response-box .secret-header {
+            background: var(--yellow-bright);
+            color: var(--brown-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .hint-box {
+            background: var(--yellow-bright);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid var(--brown-dark);
+        }
+
+        .hint-box h4 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .flag-tracker {
+            background: var(--white);
+            border: 3px solid var(--green-lime);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .flag-input {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .flag-input input {
+            padding: 12px 20px;
+            border: 3px solid var(--yellow-bright);
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-family: 'Courier New', monospace;
+            width: 300px;
+            max-width: 100%;
+        }
+
+        .flag-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .flag-result.success {
+            background: var(--green-lime);
+            display: block;
+        }
+
+        .flag-result.error {
+            background: #ffcccc;
+            display: block;
+        }
+
+        .network-tab-hint {
+            background: linear-gradient(135deg, var(--yellow-bright), var(--green-lime));
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--cream-pale);
+            border-top: 3px solid var(--green-lime);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .tab {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 後端開發與 API 實戰</h1>
+            <p class="subtitle">深入理解伺服器端程式設計與 RESTful API</p>
+            <div class="mission-banner">
+                🎯 任務目標：透過呼叫真實 API 並檢查回應封包，找出隱藏的 FLAG！
+            </div>
+        </header>
+
+        <div class="network-tab-hint">
+            💡 重要提示：按 F12 開啟開發者工具 → 切換到「Network（網路）」分頁 → 呼叫 API → 檢查 Headers 和 Response！
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('backend')">🖥️ 後端概念</div>
+            <div class="tab" onclick="showTab('php')">🐘 PHP 語言</div>
+            <div class="tab" onclick="showTab('api')">🔌 API 設計</div>
+            <div class="tab" onclick="showTab('playground')">🎮 API 實戰</div>
+        </div>
+
+        <div id="backend" class="content-section active">
+            <div class="card">
+                <h2>🖥️ 什麼是後端？</h2>
+                <p>後端（Backend）是網站或應用程式看不見的部分，負責處理資料、商業邏輯和與資料庫溝通。</p>
+
+                <h3>前後端分工</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h4>🎨 前端 (Frontend)</h4>
+                        <p><strong>職責：</strong>使用者介面<br>
+                        <strong>技術：</strong>HTML, CSS, JavaScript<br>
+                        <strong>位置：</strong>瀏覽器中執行</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🔧 後端 (Backend)</h4>
+                        <p><strong>職責：</strong>資料處理與邏輯<br>
+                        <strong>技術：</strong>PHP, Python, Node.js<br>
+                        <strong>位置：</strong>伺服器上執行</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>💾 資料庫 (Database)</h4>
+                        <p><strong>職責：</strong>資料儲存<br>
+                        <strong>技術：</strong>MySQL, MongoDB, PostgreSQL<br>
+                        <strong>位置：</strong>資料庫伺服器</p>
+                    </div>
+                </div>
+
+                <h3>後端的核心功能</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h4>🔐 身份驗證</h4>
+                        <p>處理使用者登入、註冊、權限管理</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>💾 資料操作</h4>
+                        <p>新增、查詢、更新、刪除資料（CRUD）</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🔒 安全防護</h4>
+                        <p>防止 SQL Injection、XSS 等攻擊</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📧 外部整合</h4>
+                        <p>串接第三方服務、發送郵件、推播通知</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>📊 商業邏輯</h4>
+                        <p>處理複雜的計算、規則判斷</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🚀 效能優化</h4>
+                        <p>快取、資料庫索引、負載平衡</p>
+                    </div>
+                </div>
+
+                <h3>常見後端語言</h3>
+                <div class="code-block" data-lang="比較">
+                    <pre>PHP:
+- 優點：學習容易、部署簡單、資源豐富
+- 適用：WordPress、電商網站、傳統網站
+- 框架：Laravel, Symfony, CodeIgniter
+
+Python:
+- 優點：語法簡潔、AI/ML 支援強大
+- 適用：資料分析、機器學習、Web 應用
+- 框架：Django, Flask, FastAPI
+
+Node.js (JavaScript):
+- 優點：前後端統一語言、高併發處理
+- 適用：即時應用、聊天室、API 服務
+- 框架：Express, Koa, NestJS
+
+Java:
+- 優點：穩定可靠、企業級應用
+- 適用：大型系統、金融系統
+- 框架：Spring Boot, Hibernate</pre>
+                </div>
+            </div>
+        </div>
+
+        <div id="php" class="content-section">
+            <div class="card">
+                <h2>🐘 PHP 程式語言</h2>
+                <p>PHP (Hypertext Preprocessor) 是專為網頁開發設計的伺服器端腳本語言，簡單易學且功能強大。</p>
+
+                <h3>PHP 基本語法</h3>
+                <div class="code-block" data-lang="PHP">
+                    <pre>&lt;?php
+// 這是單行註解
+
+/*
+   這是多行註解
+   可以寫很多行
+*/
+
+// 變數宣告（變數名稱前要加 $）
+$name = "小明";
+$age = 25;
+$isStudent = true;
+
+// 陣列
+$fruits = ["蘋果", "香蕉", "橘子"];
+$person = [
+    "name" => "小華",
+    "age" => 30,
+    "city" => "台北"
+];
+
+// 輸出
+echo "Hello, World!";
+echo "我是 " . $name;  // 字串串接
+
+// 條件判斷
+if ($age >= 18) {
+    echo "成年人";
+} else {
+    echo "未成年";
+}
+
+// 迴圈
+for ($i = 0; $i < 5; $i++) {
+    echo $i . " ";
+}
+
+foreach ($fruits as $fruit) {
+    echo $fruit . " ";
+}
+
+// 函式定義
+function greet($name) {
+    return "你好，" . $name . "！";
+}
+
+echo greet("大明");
+?&gt;</pre>
+                </div>
+
+                <h3>PHP 與資料庫互動</h3>
+                <div class="code-block" data-lang="PHP">
+                    <pre>&lt;?php
+// 連接 MySQL 資料庫
+$host = "localhost";
+$username = "root";
+$password = "password";
+$database = "mydb";
+
+$conn = new mysqli($host, $username, $password, $database);
+
+// 檢查連線
+if ($conn->connect_error) {
+    die("連線失敗: " . $conn->connect_error);
+}
+
+// 查詢資料（使用預處理語句防止 SQL Injection）
+$stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->bind_param("i", $user_id);
+$user_id = 1;
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        echo "姓名: " . $row["name"];
+    }
+}
+
+// 新增資料
+$stmt = $conn->prepare("INSERT INTO users (name, email) VALUES (?, ?)");
+$stmt->bind_param("ss", $name, $email);
+$name = "新使用者";
+$email = "user@example.com";
+$stmt->execute();
+
+// 關閉連線
+$stmt->close();
+$conn->close();
+?&gt;</pre>
+                </div>
+
+                <h3>PHP 處理表單</h3>
+                <div class="code-block" data-lang="PHP">
+                    <pre>&lt;?php
+// 接收 GET 參數
+$username = $_GET['username'] ?? '';
+
+// 接收 POST 資料
+$email = $_POST['email'] ?? '';
+$password = $_POST['password'] ?? '';
+
+// 驗證和清理輸入
+$username = htmlspecialchars($username);  // 防止 XSS
+$email = filter_var($email, FILTER_VALIDATE_EMAIL);
+
+// 密碼雜湊(Hash)
+$hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+// 驗證密碼
+if (password_verify($input_password, $hashed_password)) {
+    echo "密碼正確";
+}
+
+// 設定 Session
+session_start();
+$_SESSION['user_id'] = 1;
+$_SESSION['username'] = "小明";
+
+// 讀取 Session
+$user_id = $_SESSION['user_id'] ?? null;
+?&gt;</pre>
+                </div>
+            </div>
+        </div>
+
+        <div id="api" class="content-section">
+            <div class="card">
+                <h2>🔌 RESTful API 設計</h2>
+                <p>API (Application Programming Interface) 讓不同系統之間可以互相溝通，REST 是目前最流行的 API 設計風格。</p>
+
+                <h3>HTTP 方法與 CRUD 操作</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h4>GET - 讀取</h4>
+                        <p>取得資源，不改變伺服器狀態<br>
+                        範例：GET /api/users/123</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>POST - 新增</h4>
+                        <p>建立新資源<br>
+                        範例：POST /api/users</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>PUT - 更新</h4>
+                        <p>完整更新資源<br>
+                        範例：PUT /api/users/123</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>PATCH - 部分更新</h4>
+                        <p>部分更新資源<br>
+                        範例：PATCH /api/users/123</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>DELETE - 刪除</h4>
+                        <p>刪除資源<br>
+                        範例：DELETE /api/users/123</p>
+                    </div>
+                </div>
+
+                <h3>完整 PHP API 範例</h3>
+                <div class="code-block" data-lang="PHP">
+                    <pre>&lt;?php
+// api.php - 完整的 RESTful API 範例
+
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
+
+// 自訂 Response Header（FLAG 可以藏在這裡！）
+header("X-API-Version: 1.0");
+header("X-Powered-By: KIWIS-Backend");
+header("X-Secret-Message: KIWIS{B4ck3nd_");
+
+// 取得請求方法
+$method = $_SERVER['REQUEST_METHOD'];
+
+// 解析路徑
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$path_parts = explode('/', trim($path, '/'));
+
+// 模擬資料庫
+$users = [
+    1 => ["id" => 1, "name" => "張小明", "email" => "ming@example.com"],
+    2 => ["id" => 2, "name" => "李大華", "email" => "hua@example.com"],
+    3 => ["id" => 3, "name" => "王美麗", "email" => "mei@example.com"]
+];
+
+// 路由處理
+switch ($method) {
+    case 'GET':
+        if (isset($path_parts[2]) && $path_parts[1] == 'api' && $path_parts[2] == 'users') {
+            // GET /api/users - 取得所有使用者
+            if (isset($path_parts[3])) {
+                // GET /api/users/{id} - 取得單一使用者
+                $id = intval($path_parts[3]);
+                if (isset($users[$id])) {
+                    echo json_encode([
+                        "success" => true,
+                        "data" => $users[$id],
+                        // FLAG 片段藏在這裡
+                        "_metadata" => [
+                            "timestamp" => time(),
+                            "hint" => "檢查 Response Headers",
+                            "secret" => base64_encode("4P1_M45t3r}")
+                        ]
+                    ], JSON_UNESCAPED_UNICODE);
+                }
+            }
+        }
+        break;
+}
+?&gt;</pre>
+                </div>
+
+                <div class="hint-box">
+                    <h4>🔍 FLAG 藏在哪裡？</h4>
+                    <p><strong>提示 1：</strong>檢查 HTTP Response Headers 中的自訂標頭（X- 開頭的）</p>
+                    <p><strong>提示 2：</strong>某個 API 回應的 JSON 中有 Base64 編碼的秘密</p>
+                    <p><strong>提示 3：</strong>試著呼叫 /flag 這個隱藏的 endpoint</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="playground" class="content-section">
+            <div class="card">
+                <h2>🎮 API 實戰演練</h2>
+                <p>實際呼叫真實 API 並檢查回應，找出隱藏的 FLAG！</p>
+
+                <div class="api-playground">
+                    <h3>📡 可用的 API Endpoints</h3>
+                    <p style="margin-bottom: 20px;">API 位址：<code>https://lab.feifei.tw/demo/api.php</code></p>
+                    
+                    <div class="api-endpoint">
+                        <h4>1️⃣ API 說明文件</h4>
+                        <div class="endpoint-url">GET https://lab.feifei.tw/demo/api.php</div>
+                        <p>取得 API 的使用說明和可用端點</p>
+                        <button class="btn-primary" onclick="callAPI('')">呼叫 API</button>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <h4>2️⃣ 取得所有使用者</h4>
+                        <div class="endpoint-url">GET https://lab.feifei.tw/demo/api.php/users</div>
+                        <p>回傳所有使用者清單</p>
+                        <button class="btn-primary" onclick="callAPI('users')">呼叫 API</button>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <h4>3️⃣ 取得特定使用者 ⭐ FLAG 在這裡！</h4>
+                        <div class="endpoint-url">GET https://lab.feifei.tw/demo/api.php/users/{id}</div>
+                        <p>回傳指定 ID 的使用者資料（試試看 ID: 1, 2, 3）</p>
+                        <button class="btn-primary" onclick="callAPI('users/1')">呼叫 API (ID=1)</button>
+                        <button class="btn-primary" onclick="callAPI('users/2')">呼叫 API (ID=2)</button>
+                        <button class="btn-primary" onclick="callAPI('users/3')">呼叫 API (ID=3)</button>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <h4>4️⃣ 新增使用者</h4>
+                        <div class="endpoint-url">POST https://lab.feifei.tw/demo/api.php/users</div>
+                        <p>建立新的使用者</p>
+                        <button class="btn-primary" onclick="callAPI('users', 'POST')">呼叫 API</button>
+                    </div>
+
+                    <div class="api-endpoint">
+                        <h4>🎁 隱藏的 Endpoint</h4>
+                        <div class="endpoint-url">GET https://lab.feifei.tw/demo/api.php/flag</div>
+                        <p>這是一個隱藏的 endpoint，提供 FLAG 尋找的線索！</p>
+                        <button class="btn-primary" onclick="callAPI('flag')">呼叫 API</button>
+                    </div>
+
+                    <h3>📨 API 回應</h3>
+                    <div class="response-box" id="responseBox">
+等待 API 呼叫...
+
+💡 重要提示：
+1. 按下 F12 開啟開發者工具
+2. 切換到「Network（網路）」分頁
+3. 點擊上方按鈕呼叫 API
+4. 在 Network 中點擊該請求
+5. 查看「Headers」區域找出 X-Secret-Message
+6. 查看「Response」區域找出 _metadata.secret
+                    </div>
+                </div>
+
+                <div class="hint-box">
+                    <h4>🎓 如何找到 FLAG？</h4>
+                    <ol style="line-height: 2;">
+                        <li>按下 F12 開啟開發者工具</li>
+                        <li>切換到「Network（網路）」分頁</li>
+                        <li>點擊上方「取得特定使用者」按鈕呼叫 API</li>
+                        <li>在 Network 分頁中點擊該請求（api.php）</li>
+                        <li>查看「Headers（標頭）」→「Response Headers」</li>
+                        <li>找出 <code>X-Secret-Message</code> 標頭（FLAG 第一部分）</li>
+                        <li>切換到「Response」或「Preview」分頁</li>
+                        <li>找到 <code>_metadata.secret</code> 欄位</li>
+                        <li>這是 Base64 編碼，在 Console 輸入：<code>atob('編碼內容')</code></li>
+                        <li>組合兩個片段得到完整 FLAG！</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="flag-tracker">
+            <h3>🏁 提交你的 FLAG</h3>
+            <p style="margin: 15px 0;">將 Response Header 中的 X-Secret-Message 和 JSON 中解碼後的 secret 組合起來</p>
+            <div class="flag-input">
+                <input type="text" id="flagInput" placeholder="輸入完整的 FLAG">
+                <button class="btn-primary" onclick="checkFlag()">驗證 FLAG</button>
+            </div>
+            <div class="flag-result" id="flagResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // 正確的 FLAG
+        const correctFlag = "KIWIS{B4ck3nd_4P1_M45t3r}";
+        const API_BASE = "https://lab.feifei.tw/demo/api.php";
+
+        // 切換分頁
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const sections = document.querySelectorAll('.content-section');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            sections.forEach(section => section.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // 真實 API 呼叫
+        async function callAPI(endpoint, method = 'GET') {
+            const responseBox = document.getElementById('responseBox');
+            const url = endpoint ? `${API_BASE}/${endpoint}` : API_BASE;
+            
+            // 顯示載入中
+            responseBox.innerHTML = '⏳ 正在呼叫 API...<span class="loading"></span>\n\n' +
+                                    `📍 請求 URL: ${url}\n` +
+                                    `📤 請求方法: ${method}\n`;
+            
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+
+                // 如果是 POST 請求，加入測試資料
+                if (method === 'POST') {
+                    options.body = JSON.stringify({
+                        name: "新使用者",
+                        email: "newuser@example.com",
+                        role: "使用者"
+                    });
+                }
+
+                const response = await fetch(url, options);
+                
+                // 取得所有 Headers
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                
+                // 取得 Response Body
+                const data = await response.json();
+                
+                // 顯示結果
+                let output = '<span class="header-section">=== Response Status ===</span>\n';
+                output += `HTTP ${response.status} ${response.statusText}\n\n`;
+                
+                output += '<span class="header-section">=== Response Headers ===</span>\n';
+                for (let [key, value] of Object.entries(headers)) {
+                    if (key.toLowerCase().startsWith('x-secret')) {
+                        output += `<span class="secret-header">${key}: ${value} 🔥 FLAG 第一部分！</span>\n`;
+                    } else {
+                        output += `${key}: ${value}\n`;
+                    }
+                }
+                
+                output += '\n<span class="header-section">=== Response Body ===</span>\n';
+                output += JSON.stringify(data, null, 2);
+                
+                // 如果回應中有 _metadata.secret，特別標註
+                if (data.data && data.data._metadata && data.data._metadata.secret) {
+                    output += '\n\n<span class="secret-header">🔥 發現隱藏欄位！</span>\n';
+                    output += `_metadata.secret: ${data.data._metadata.secret}\n`;
+                    output += `💡 這是 Base64 編碼，解碼方式：\n`;
+                    output += `   在 Console 執行: atob("${data.data._metadata.secret}")\n`;
+                    output += `   或使用線上工具解碼\n`;
+                    
+                    // 在 console 顯示解碼結果
+                    try {
+                        const decoded = atob(data.data._metadata.secret);
+                        console.log('%c🔓 Base64 解碼結果:', 'color: #cfe867; font-weight: bold; font-size: 16px;');
+                        console.log(decoded);
+                        output += `\n🔓 解碼後的內容: ${decoded}`;
+                    } catch (e) {
+                        console.error('解碼失敗:', e);
+                    }
+                }
+                
+                output += '\n\n💡 <span class="header-section">提示：</span>\n';
+                output += '1. Response Headers 中的 X-Secret-Message 是 FLAG 第一部分\n';
+                output += '2. _metadata.secret 是 Base64 編碼的 FLAG 第二部分\n';
+                output += '3. 組合兩個片段：KIWIS{B4ck3nd_ + 4P1_M45t3r}\n';
+                output += '4. 也可以在開發者工具的 Network 分頁中檢視完整的 Headers';
+                
+                responseBox.innerHTML = output;
+                
+                // 在 Console 中也輸出，方便查看
+                console.log('%c=== API 呼叫結果 ===', 'color: #cfe867; font-weight: bold; font-size: 16px;');
+                console.log('URL:', url);
+                console.log('Headers:', headers);
+                console.log('Response:', data);
+                
+            } catch (error) {
+                responseBox.innerHTML = `❌ API 呼叫失敗！\n\n` +
+                                       `錯誤訊息: ${error.message}\n\n` +
+                                       `可能原因：\n` +
+                                       `1. 網路連線問題\n` +
+                                       `2. API 伺服器未回應\n` +
+                                       `3. CORS 設定問題\n\n` +
+                                       `請確認 API 伺服器運作正常：\n` +
+                                       `${API_BASE}`;
+                
+                console.error('API 呼叫錯誤:', error);
+            }
+        }
+
+        // 驗證 FLAG
+        function checkFlag() {
+            const input = document.getElementById('flagInput').value.trim();
+            const result = document.getElementById('flagResult');
+            
+            if (input === correctFlag) {
+                result.className = 'flag-result success';
+                result.textContent = '🎉 恭喜！FLAG 正確！你已經掌握後端 API 的精髓了！';
+                
+                setTimeout(() => {
+                    alert('🏆 任務完成！\n\n你已經學會：\n✓ 後端的核心概念\n✓ PHP 程式語言\n✓ RESTful API 設計\n✓ 如何檢查 HTTP Headers 和 Response\n✓ Base64 編碼解碼\n\n下一步：實際開發自己的 API 專案！');
+                }, 500);
+            } else if (input.includes('KIWIS{') && input.includes('}')) {
+                result.className = 'flag-result error';
+                result.textContent = '❌ FLAG 格式正確，但內容不對！\n提示：檢查 X-Secret-Message header 和 _metadata.secret (需要 Base64 解碼)';
+            } else {
+                result.className = 'flag-result error';
+                result.textContent = '❌ FLAG 不正確！\n記得要組合 Response Header 和 JSON 中的片段喔！格式：KIWIS{...}';
+            }
+        }
+
+        // 頁面載入提示
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (confirm('🎯 準備好接受後端 API 挑戰了嗎？\n\n你的任務：\n1. 學習後端和 API 的知識\n2. 呼叫真實的 API 並檢查回應\n3. 從 HTTP Headers 和 Response 中找出 FLAG 片段\n4. 組合片段得到完整的 FLAG\n\n需要打開開發者工具 (F12) 的 Network 分頁！\n\n準備好了嗎？')) {
+                    alert('💪 很好！\n\n小提示：\n- 先到「API 實戰」分頁\n- 呼叫「取得特定使用者」API\n- 仔細觀察 Response Headers 和 Body\n\n祝你好運！');
+                }
+            }, 1000);
+        });
+
+        // 自動在 Console 顯示幫助資訊
+        console.log('%c🔍 尋找 FLAG 的技巧', 'color: #f5d652; font-weight: bold; font-size: 18px;');
+        console.log('%c1. 呼叫 API 後，在這個 Console 會顯示完整的 Headers 和 Response', 'color: #cfe867; font-size: 14px;');
+        console.log('%c2. 或是切換到 Network 分頁，點擊請求查看詳細資訊', 'color: #cfe867; font-size: 14px;');
+        console.log('%c3. Base64 解碼指令: atob("編碼字串")', 'color: #cfe867; font-size: 14px;');
+        console.log('%c4. API 位址: ' + API_BASE, 'color: #cfe867; font-size: 14px;');
+    </script>
+</body>
+</html>

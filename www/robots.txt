@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /search
+Disallow: /sdch
+Disallow: /groups
+Disallow: /images
+Disallow: flag{Robots_txt_in_here}
+
+
+User-agent: Cat
+allow: /practice/basic/combine-http.php
+allow: /practice/basic/combine-http/user-agent.php

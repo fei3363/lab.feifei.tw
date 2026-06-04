@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言板 - 不安全版本（Stored XSS）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        
+        .warning strong {
+            color: #d32f2f;
+        }
+        
+        h1 {
+            color: #f5576c;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-submit {
+            background: #f5576c;
+            color: white;
+        }
+        
+        .btn-submit:hover {
+            background: #e04556;
+        }
+        
+        .btn-clear {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-clear:hover {
+            background: #5a6268;
+        }
+        
+        .messages {
+            margin-top: 40px;
+        }
+        
+        .messages h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #f5576c;
+        }
+        
+        .message-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .message-author {
+            font-weight: bold;
+            color: #f5576c;
+            font-size: 16px;
+        }
+        
+        .message-time {
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .message-content {
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        
+        .code-block .comment {
+            color: #75715e;
+        }
+        
+        .code-block .keyword {
+            color: #f92672;
+        }
+        
+        .code-block .function {
+            color: #66d9ef;
+        }
+        
+        .code-block .string {
+            color: #e6db74;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning">
+            <strong>⚠️ 警告：</strong> 這是一個有 Stored XSS 漏洞的不安全留言板，僅供教學使用！
+        </div>
+        
+        <h1>💬 留言板</h1>
+        <p class="subtitle">Stored XSS 漏洞示範（使用 localStorage 儲存）</p>
+        
+        <form id="messageForm" onsubmit="return submitMessage(event)">
+            <div class="form-group">
+                <label for="authorInput">姓名：</label>
+                <input type="text" id="authorInput" placeholder="請輸入你的姓名" required />
+            </div>
+            
+            <div class="form-group">
+                <label for="messageInput">留言內容：</label>
+                <textarea id="messageInput" placeholder="請輸入留言內容..." required></textarea>
+            </div>
+            
+            <div class="btn-group">
+                <button type="submit" class="btn-submit">📝 送出留言</button>
+                <button type="button" class="btn-clear" onclick="clearAllMessages()">🗑️ 清除所有留言</button>
+            </div>
+        </form>
+        
+        <div class="messages">
+            <h2>📋 所有留言</h2>
+            <div id="messagesList"></div>
+        </div>
+        
+        <div class="code-block">
+<span class="comment">// 不安全的程式碼（有 Stored XSS 漏洞）</span>
+<span class="keyword">function</span> <span class="function">displayMessages</span>() {
+    <span class="keyword">var</span> messages = JSON.parse(localStorage.getItem(<span class="string">'messages'</span>)) || [];
+    <span class="keyword">var</span> html = <span class="string">''</span>;
+    
+    messages.forEach(<span class="keyword">function</span>(msg) {
+        <span class="comment">// ❌ 危險！直接將儲存的內容插入 HTML</span>
+        html += <span class="string">'&lt;div class="message-card"&gt;'</span>;
+        html += <span class="string">'&lt;div class="message-author"&gt;'</span> + msg.author + <span class="string">'&lt;/div&gt;'</span>;
+        html += <span class="string">'&lt;div class="message-content"&gt;'</span> + msg.content + <span class="string">'&lt;/div&gt;'</span>;
+        html += <span class="string">'&lt;/div&gt;'</span>;
+    });
+    
+    document.getElementById(<span class="string">'messagesList'</span>).innerHTML = html;
+}
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #ffebee; border-radius: 10px; font-size: 14px;">
+            <strong>🧪 測試 Stored XSS Payload：</strong><br>
+            在留言內容中輸入：<br>
+            <code style="background: white; padding: 5px; border-radius: 4px; display: inline-block; margin-top: 5px;">
+                &lt;img src=x onerror=alert('Stored XSS!')&gt;
+            </code><br>
+            <code style="background: white; padding: 5px; border-radius: 4px; display: inline-block; margin-top: 5px;">
+                &lt;script&gt;alert('這是 Stored XSS')&lt;/script&gt;
+            </code>
+        </div>
+    </div>
+    
+    <script>
+        // 載入並顯示所有留言
+        function displayMessages() {
+            var messages = JSON.parse(localStorage.getItem('messages')) || [];
+            var container = document.getElementById('messagesList');
+            
+            if (messages.length === 0) {
+                container.innerHTML = '<div class="empty-state">還沒有任何留言，快來留下第一則留言吧！</div>';
+                return;
+            }
+            
+            var html = '';
+            messages.forEach(function(msg) {
+                html += '<div class="message-card">';
+                html += '<div class="message-header">';
+                // ❌ 危險！直接插入使用者輸入的內容
+                html += '<div class="message-author">' + msg.author + '</div>';
+                html += '<div class="message-time">' + msg.time + '</div>';
+                html += '</div>';
+                // ❌ 危險！留言內容也直接插入，會執行惡意腳本
+                html += '<div class="message-content">' + msg.content + '</div>';
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 提交留言
+        function submitMessage(event) {
+            event.preventDefault();
+            
+            var author = document.getElementById('authorInput').value;
+            var content = document.getElementById('messageInput').value;
+            
+            // 取得現有留言
+            var messages = JSON.parse(localStorage.getItem('messages')) || [];
+            
+            // 新增留言（沒有任何過濾！）
+            var newMessage = {
+                author: author,
+                content: content,
+                time: new Date().toLocaleString('zh-TW')
+            };
+            
+            messages.push(newMessage);
+            
+            // 儲存到 localStorage
+            localStorage.setItem('messages', JSON.stringify(messages));
+            
+            // 清空表單
+            document.getElementById('messageForm').reset();
+            
+            // 重新顯示留言
+            displayMessages();
+            
+            return false;
+        }
+        
+        // 清除所有留言
+        function clearAllMessages() {
+            if (confirm('確定要清除所有留言嗎？')) {
+                localStorage.removeItem('messages');
+                displayMessages();
+            }
+        }
+        
+        // 頁面載入時顯示留言
+        window.onload = function() {
+            displayMessages();
+        };
+    </script>
+</body>
+</html>

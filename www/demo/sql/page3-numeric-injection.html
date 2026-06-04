@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第三課：數字型 SQL Injection</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔢 第三課：數字型 SQL Injection</h1>
+            <p class="subtitle">學習不需要單引號的注入攻擊</p>
+        </header>
+
+        <div class="nav-bar">
+            <a href="index.html" class="nav-btn">🏠 回首頁</a>
+            <a href="page2-injection-basic.html" class="nav-btn">⬅️ 上一課</a>
+            <a href="page4-union-select.html" class="nav-btn">下一課 ➡️</a>
+        </div>
+
+        <div class="explanation-box">
+            <h3>💡 什麼是數字型 SQL Injection？</h3>
+            <p>在上一課中，我們學到字串型參數需要用單引號 <code>'</code> 包住。</p>
+            <p>但如果參數是<strong>數字</strong>，SQL 語法中就不需要單引號！</p>
+            <p>這代表攻擊者可以<strong>直接注入 SQL 指令</strong>，不需要處理單引號的問題。</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>📋 情境：商品查詢系統</h2>
+            <div class="explanation-box">
+                <h3>💼 業務場景</h3>
+                <p>網站有一個商品查詢功能，使用者可以透過商品 ID 查詢商品詳情。</p>
+                <p>例如：<code>http://shop.com/product?id=1</code></p>
+            </div>
+        </div>
+
+        <!-- 字串型 vs 數字型比較 -->
+        <div class="demo-section">
+            <h2>🔄 字串型 vs 數字型參數</h2>
+
+            <div class="flow-diagram" style="flex-direction: column; align-items: stretch;">
+                <div class="flow-box success">
+                    <strong>字串型參數（需要單引號）</strong><br>
+                    <code>SELECT * FROM users WHERE username = '<span style="color: red;">admin</span>'</code><br>
+                    <small>字串必須用單引號包住</small>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0;">⬇️ VS ⬇️</div>
+
+                <div class="flow-box danger">
+                    <strong>數字型參數（不需要單引號）</strong><br>
+                    <code>SELECT * FROM products WHERE id = <span style="color: red;">1</span></code><br>
+                    <small>數字不需要單引號！</small>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h3>⚠️ 為什麼數字型更危險？</h3>
+                <p>因為不需要處理單引號，攻擊者可以<strong>直接</strong>注入 SQL 語法！</p>
+                <ul>
+                    <li>✗ 不需要用單引號「閉合」字串</li>
+                    <li>✗ 不需要處理跳脫字元</li>
+                    <li>✓ 可以直接加入 AND、OR、UNION 等關鍵字</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 正常查詢 -->
+        <div class="demo-section">
+            <h2>✅ 正常查詢範例</h2>
+
+            <div class="input-group">
+                <label>商品 ID：</label>
+                <input type="number" id="normal-id" value="1" placeholder="輸入商品 ID">
+            </div>
+
+            <button class="btn btn-primary" onclick="normalQuery()">查詢商品</button>
+
+            <div class="code-display" id="normal-sql">
+                點擊「查詢商品」查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="normal-result">
+                查詢結果會顯示在這裡
+            </div>
+        </div>
+
+        <!-- 數字型注入攻擊 -->
+        <div class="demo-section">
+            <h2>🎯 攻擊範例 1：使用 OR 繞過條件</h2>
+
+            <div class="danger-box">
+                <h3>🚨 攻擊思路</h3>
+                <p>攻擊者想要查看<strong>所有商品</strong>，而不只是某一個。</p>
+                <p>他可以注入 <code>OR 1=1</code> 來讓條件永遠為真。</p>
+            </div>
+
+            <div class="input-group">
+                <label>惡意輸入：</label>
+                <input type="text" id="attack1-id" value="1 OR 1=1" readonly>
+            </div>
+
+            <button class="btn btn-danger" onclick="attack1Query()">執行攻擊</button>
+
+            <div class="flow-diagram" style="flex-direction: column; align-items: stretch;">
+                <div class="flow-box">
+                    <strong>步驟 1：原始 SQL 模板</strong><br>
+                    <code>SELECT * FROM products WHERE id = <span style="color: red;">使用者輸入</span></code>
+                </div>
+                <div class="flow-arrow" style="transform: rotate(90deg); margin: 10px 0;">➡️</div>
+                <div class="flow-box danger">
+                    <strong>步驟 2：注入 <code>1 OR 1=1</code></strong><br>
+                    <code>SELECT * FROM products WHERE id = <span style="color: red;">1 OR 1=1</span></code>
+                </div>
+                <div class="flow-arrow" style="transform: rotate(90deg); margin: 10px 0;">➡️</div>
+                <div class="flow-box danger">
+                    <strong>步驟 3：實際執行</strong><br>
+                    <code>SELECT * FROM products WHERE id = 1 <span style="color: red;">OR 1=1</span></code><br>
+                    <br>
+                    <strong>結果：</strong>因為 <code>1=1</code> 永遠為真，會選出<strong>所有商品</strong>！
+                </div>
+            </div>
+
+            <div class="code-display" id="attack1-sql">
+                點擊「執行攻擊」查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="attack1-result">
+                攻擊結果會顯示在這裡
+            </div>
+        </div>
+
+        <!-- 攻擊範例 2 -->
+        <div class="demo-section">
+            <h2>🎯 攻擊範例 2：使用 AND 加入額外條件</h2>
+
+            <div class="danger-box">
+                <h3>🚨 攻擊思路</h3>
+                <p>攻擊者想要找出<strong>價格大於某個值</strong>的商品。</p>
+                <p>他可以注入 <code>AND price > 1000</code> 來加入額外條件。</p>
+            </div>
+
+            <div class="input-group">
+                <label>惡意輸入：</label>
+                <input type="text" id="attack2-id" value="1 AND price > 1000" readonly>
+            </div>
+
+            <button class="btn btn-danger" onclick="attack2Query()">執行攻擊</button>
+
+            <div class="code-display" id="attack2-sql">
+                點擊「執行攻擊」查看 SQL 指令
+            </div>
+
+            <div class="explanation-box">
+                <h3>💡 原理說明</h3>
+                <p>注入的 SQL 變成：</p>
+                <code>SELECT * FROM products WHERE id = 1 AND price > 1000</code>
+                <p>攻擊者可以透過這種方式：</p>
+                <ul>
+                    <li>探測資料表結構（例如測試 <code>AND column_name IS NOT NULL</code>）</li>
+                    <li>加入額外的過濾條件</li>
+                    <li>進行資料探勘</li>
+                </ul>
+            </div>
+
+            <div class="result-display" id="attack2-result">
+                攻擊結果會顯示在這裡
+            </div>
+        </div>
+
+        <!-- 攻擊範例 3 -->
+        <div class="demo-section">
+            <h2>🎯 攻擊範例 3：使用註解符號</h2>
+
+            <div class="danger-box">
+                <h3>🚨 攻擊思路</h3>
+                <p>如果 SQL 查詢後面還有其他條件，攻擊者可以用註解符號把它們「註解掉」。</p>
+                <p>假設原始 SQL 是：<code>WHERE id = ? AND status = 'active'</code></p>
+            </div>
+
+            <div class="input-group">
+                <label>惡意輸入：</label>
+                <input type="text" id="attack3-id" value="1 OR 1=1 --" readonly>
+            </div>
+
+            <button class="btn btn-danger" onclick="attack3Query()">執行攻擊</button>
+
+            <div class="code-display" id="attack3-sql">
+                點擊「執行攻擊」查看 SQL 指令
+            </div>
+
+            <div class="explanation-box">
+                <h3>💡 原理說明</h3>
+                <p>假設原本的 SQL 是：</p>
+                <code>SELECT * FROM products WHERE id = ? AND status = 'active'</code>
+                <p>注入 <code>1 OR 1=1 --</code> 後變成：</p>
+                <code>SELECT * FROM products WHERE id = 1 OR 1=1 -- AND status = 'active'</code>
+                <p><code>--</code> 後面的內容都被註解掉了！</p>
+            </div>
+
+            <div class="result-display" id="attack3-result">
+                攻擊結果會顯示在這裡
+            </div>
+        </div>
+
+        <!-- 資料庫視覺化 -->
+        <div class="database-visual">
+            <h2>💾 資料庫內容 - products 資料表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>商品名稱</th>
+                        <th>價格 (price)</th>
+                        <th>庫存</th>
+                        <th>狀態 (status)</th>
+                    </tr>
+                </thead>
+                <tbody id="products-tbody">
+                    <tr>
+                        <td>1</td>
+                        <td>筆記型電腦</td>
+                        <td>25000</td>
+                        <td>10</td>
+                        <td>active</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>無線滑鼠</td>
+                        <td>500</td>
+                        <td>50</td>
+                        <td>active</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>機械鍵盤</td>
+                        <td>2500</td>
+                        <td>30</td>
+                        <td>active</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>4K 螢幕</td>
+                        <td>8000</td>
+                        <td>5</td>
+                        <td>active</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 真實案例 -->
+        <div class="demo-section">
+            <h2>🌍 真實世界的數字型 SQL Injection</h2>
+
+            <div class="warning-box">
+                <h3>⚠️ 常見的脆弱點</h3>
+                <p>數字型 SQL Injection 常見於：</p>
+                <ul>
+                    <li>商品查詢：<code>product.php?id=1</code></li>
+                    <li>文章頁面：<code>article.php?id=123</code></li>
+                    <li>使用者資料：<code>profile.php?user_id=5</code></li>
+                    <li>分類瀏覽：<code>category.php?cat_id=2</code></li>
+                </ul>
+            </div>
+
+            <div class="explanation-box">
+                <h3>🔍 如何測試網站是否有數字型 SQL Injection？</h3>
+                <p><strong>測試步驟：</strong></p>
+                <ol>
+                    <li>正常存取：<code>product.php?id=1</code> → 正常顯示商品</li>
+                    <li>測試加法：<code>product.php?id=1+0</code> → 如果還是顯示同樣商品，可能有漏洞</li>
+                    <li>測試減法：<code>product.php?id=2-1</code> → 如果顯示 ID=1 的商品，確定有漏洞</li>
+                    <li>測試 OR：<code>product.php?id=1 OR 1=1</code> → 如果顯示多個商品，確定可以注入</li>
+                </ol>
+            </div>
+
+            <div class="input-group">
+                <label>試試看測試方法：</label>
+                <input type="text" id="test-id" value="2-1" placeholder="例如：2-1 或 1+0">
+            </div>
+
+            <button class="btn btn-warning" onclick="testQuery()">測試</button>
+
+            <div class="code-display" id="test-sql">
+                點擊「測試」查看 SQL 指令
+            </div>
+
+            <div class="result-display" id="test-result">
+                測試結果會顯示在這裡
+            </div>
+        </div>
+
+        <!-- 防禦方法 -->
+        <div class="success-box">
+            <h3>✅ 如何防禦數字型 SQL Injection？</h3>
+
+            <p><strong>1. 使用 Prepared Statement（最重要！）</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 5px; overflow-x: auto;">
+<span style="color: #6a9955;">// 不安全 ❌</span>
+<span style="color: #f92672;">String</span> sql = <span style="color: #ce9178;">"SELECT * FROM products WHERE id = "</span> + id;
+
+<span style="color: #6a9955;">// 安全 ✅</span>
+<span style="color: #4ec9b0;">PreparedStatement</span> stmt = conn.<span style="color: #dcdcaa;">prepareStatement</span>(
+    <span style="color: #ce9178;">"SELECT * FROM products WHERE id = ?"</span>
+);
+stmt.<span style="color: #dcdcaa;">setInt</span>(<span style="color: #b5cea8;">1</span>, id);
+            </pre>
+
+            <p><strong>2. 型別驗證</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 5px; overflow-x: auto;">
+<span style="color: #6a9955;">// 確保輸入是整數</span>
+<span style="color: #569cd6;">if</span> (!<span style="color: #dcdcaa;">is_numeric</span>($id) || $id != (<span style="color: #569cd6;">int</span>)$id) {
+    <span style="color: #569cd6;">die</span>(<span style="color: #ce9178;">"無效的 ID"</span>);
+}
+<span style="color: #6a9955;">// 或使用強型別轉換</span>
+$id = (<span style="color: #569cd6;">int</span>) $_GET[<span style="color: #ce9178;">'id'</span>];
+            </pre>
+
+            <p><strong>3. 白名單驗證</strong></p>
+            <pre style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 5px; overflow-x: auto;">
+<span style="color: #6a9955;">// 確保只包含數字</span>
+<span style="color: #569cd6;">if</span> (!<span style="color: #dcdcaa;">preg_match</span>(<span style="color: #ce9178;">'/^[0-9]+$/'</span>, $id)) {
+    <span style="color: #569cd6;">die</span>(<span style="color: #ce9178;">"無效的 ID"</span>);
+}
+            </pre>
+
+            <p><strong>4. 使用 ORM 框架</strong></p>
+            <p>現代 ORM 框架會自動處理參數化查詢，大幅降低 SQL Injection 風險。</p>
+        </div>
+
+        <div class="success-box">
+            <h3>🎓 恭喜完成第三課！</h3>
+            <p>你已經了解：</p>
+            <ul>
+                <li>✓ 數字型參數不需要單引號</li>
+                <li>✓ 為什麼數字型 SQL Injection 更容易攻擊</li>
+                <li>✓ 常見的數字型注入手法</li>
+                <li>✓ 如何測試與防禦</li>
+            </ul>
+            <p>下一課我們將學習「Union Select 注入」，這是更進階的資料竊取技術。</p>
+            <a href="page4-union-select.html" class="btn btn-primary">前往第四課</a>
+        </div>
+
+        <footer>
+            <p>💡 記住：永遠不要相信使用者輸入，即使看起來只是數字！</p>
+        </footer>
+    </div>
+
+    <script>
+        // 模擬資料庫
+        const products = [
+            {id: 1, name: '筆記型電腦', price: 25000, stock: 10, status: 'active'},
+            {id: 2, name: '無線滑鼠', price: 500, stock: 50, status: 'active'},
+            {id: 3, name: '機械鍵盤', price: 2500, stock: 30, status: 'active'},
+            {id: 4, name: '4K 螢幕', price: 8000, stock: 5, status: 'active'}
+        ];
+
+        // 格式化 SQL
+        function formatSQL(sql, dangerous = false) {
+            let formatted = sql.replace(/\b(SELECT|FROM|WHERE|AND|OR)\b/g, '<span class="keyword">$1</span>');
+            formatted = formatted.replace(/'([^']*)'/g, '<span class="string">\'$1\'</span>');
+            formatted = formatted.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+
+            if (dangerous) {
+                formatted = formatted.replace(/(--|\#|OR|AND\s+\d+=\d+)/g, '<span class="danger">$1</span>');
+            }
+
+            return formatted;
+        }
+
+        // 顯示產品
+        function displayProducts(productList, resultDiv) {
+            let html = '<strong>查詢結果：</strong><br><br>';
+            productList.forEach(p => {
+                html += `
+                    <div style="background: white; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ddd;">
+                        <strong>${p.name}</strong> (ID: ${p.id})<br>
+                        價格：NT$ ${p.price.toLocaleString()} | 庫存：${p.stock}
+                    </div>
+                `;
+            });
+            resultDiv.innerHTML = html;
+        }
+
+        // 正常查詢
+        function normalQuery() {
+            const id = document.getElementById('normal-id').value;
+            const sql = `SELECT * FROM products WHERE id = ${id}`;
+            document.getElementById('normal-sql').innerHTML = formatSQL(sql);
+
+            const product = products.find(p => p.id === parseInt(id));
+            const resultDiv = document.getElementById('normal-result');
+
+            if (product) {
+                resultDiv.className = 'result-display success';
+                displayProducts([product], resultDiv);
+            } else {
+                resultDiv.className = 'result-display error';
+                resultDiv.innerHTML = '<strong>❌ 找不到商品</strong>';
+            }
+        }
+
+        // 攻擊 1：OR 1=1
+        function attack1Query() {
+            const input = document.getElementById('attack1-id').value;
+            const sql = `SELECT * FROM products WHERE id = ${input}`;
+            document.getElementById('attack1-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('attack1-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                因為 <code>1=1</code> 永遠為真，查詢返回了<strong>所有 ${products.length} 個商品</strong>！<br><br>
+            `;
+            displayProducts(products, resultDiv);
+        }
+
+        // 攻擊 2：AND 條件
+        function attack2Query() {
+            const input = document.getElementById('attack2-id').value;
+            const sql = `SELECT * FROM products WHERE id = ${input}`;
+            document.getElementById('attack2-sql').innerHTML = formatSQL(sql, true);
+
+            const expensiveProducts = products.filter(p => p.price > 1000);
+            const resultDiv = document.getElementById('attack2-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                攻擊者成功加入額外條件，找到了 ${expensiveProducts.length} 個價格超過 1000 的商品：<br><br>
+            `;
+            displayProducts(expensiveProducts, resultDiv);
+        }
+
+        // 攻擊 3：註解
+        function attack3Query() {
+            const input = document.getElementById('attack3-id').value;
+            const sql = `SELECT * FROM products WHERE id = ${input} AND status = 'active'`;
+            document.getElementById('attack3-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('attack3-result');
+            resultDiv.className = 'result-display error';
+            resultDiv.innerHTML = `
+                <strong>🚨 攻擊成功！</strong><br>
+                使用註解符號 <code>--</code> 把後面的 <code>AND status = 'active'</code> 註解掉了！<br>
+                這樣可以繞過狀態檢查，查看所有商品（包含已下架的）。<br><br>
+            `;
+            displayProducts(products, resultDiv);
+        }
+
+        // 測試查詢
+        function testQuery() {
+            const input = document.getElementById('test-id').value;
+            const sql = `SELECT * FROM products WHERE id = ${input}`;
+            document.getElementById('test-sql').innerHTML = formatSQL(sql, true);
+
+            const resultDiv = document.getElementById('test-result');
+
+            // 嘗試評估數學表達式（僅用於示範，實際上不安全）
+            try {
+                // 安全地解析簡單的數學表達式
+                let evalResult = null;
+                if (/^[\d\s\+\-]+$/.test(input)) {
+                    evalResult = eval(input);
+                }
+
+                if (evalResult !== null) {
+                    const product = products.find(p => p.id === evalResult);
+                    if (product) {
+                        resultDiv.className = 'result-display error';
+                        resultDiv.innerHTML = `
+                            <strong>⚠️ 發現漏洞！</strong><br>
+                            輸入 <code>${input}</code> 被計算為 <code>${evalResult}</code><br>
+                            這表示伺服器會執行數學運算，存在 SQL Injection 風險！<br><br>
+                        `;
+                        displayProducts([product], resultDiv);
+                    }
+                } else {
+                    resultDiv.className = 'result-display';
+                    resultDiv.innerHTML = '<strong>測試完成</strong><br>請查看上方的 SQL 指令';
+                }
+            } catch (e) {
+                resultDiv.className = 'result-display';
+                resultDiv.innerHTML = '<strong>測試完成</strong><br>請查看上方的 SQL 指令';
+            }
+        }
+    </script>
+</body>
+</html>

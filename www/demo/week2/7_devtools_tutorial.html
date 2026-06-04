@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開發者工具教學</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .section h3 {
+            color: #333;
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box strong {
+            color: #1565c0;
+        }
+        
+        .shortcut-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .shortcut-box code {
+            background: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #d84315;
+            font-weight: bold;
+        }
+        
+        .demo-area {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .demo-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        
+        .demo-button:hover {
+            background: #5568d3;
+        }
+        
+        .demo-input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 5px;
+            width: 250px;
+        }
+        
+        .demo-output {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            min-height: 50px;
+            border: 2px solid #667eea;
+        }
+        
+        .task-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .task-box strong {
+            color: #2e7d32;
+        }
+        
+        .task-box ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .task-box li {
+            margin-bottom: 8px;
+        }
+        
+        .hidden-element {
+            display: none;
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 2px dashed #f44336;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+        
+        .api-demo {
+            margin-top: 20px;
+        }
+        
+        #apiResult {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .console-demo {
+            background: #263238;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 15px 0;
+        }
+        
+        .console-demo .prompt {
+            color: #4fc3f7;
+        }
+        
+        .console-demo .output {
+            color: #aed581;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ 瀏覽器開發者工具教學</h1>
+            <p>學習使用 DevTools 進行網站安全測試</p>
+        </div>
+        
+        <!-- 如何開啟 -->
+        <div class="section">
+            <h2>📂 如何開啟開發者工具</h2>
+            
+            <div class="shortcut-box">
+                <strong>🖥️ Windows / Linux：</strong><br>
+                按 <code>F12</code> 或 <code>Ctrl + Shift + I</code> 或 <code>Ctrl + Shift + J</code>
+            </div>
+            
+            <div class="shortcut-box">
+                <strong>🍎 macOS：</strong><br>
+                按 <code>Cmd + Option + I</code> 或 <code>Cmd + Option + J</code>
+            </div>
+            
+            <div class="shortcut-box">
+                <strong>🖱️ 使用滑鼠：</strong><br>
+                在網頁上按右鍵 → 選擇「<code>檢查</code>」或「<code>Inspect</code>」
+            </div>
+            
+            <div class="task-box">
+                <strong>✅ 任務 1：開啟開發者工具</strong>
+                <ul>
+                    <li>試試不同的方法開啟開發者工具</li>
+                    <li>熟悉工具的位置和介面</li>
+                    <li>嘗試將開發者工具固定在不同位置（底部、右側、獨立視窗）</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Elements 面板 -->
+        <div class="section">
+            <h2>🎨 Elements 面板（元素檢查）</h2>
+            
+            <div class="info-box">
+                <strong>用途：</strong>檢視和修改 HTML 結構與 CSS 樣式
+            </div>
+            
+            <h3>實作練習：修改網頁內容</h3>
+            <div class="demo-area">
+                <div id="demoText" style="padding: 15px; background: #e1f5fe; border-radius: 8px; font-size: 18px;">
+                    這是一段可以被修改的文字，試著用 Elements 面板改變我！
+                </div>
+                <div id="demoBox" style="margin-top: 15px; width: 100px; height: 100px; background: #ff5722; border-radius: 10px;"></div>
+            </div>
+            
+            <div class="task-box">
+                <strong>✅ 任務 2：使用 Elements 面板</strong>
+                <ul>
+                    <li>在上方文字上按右鍵 → 檢查</li>
+                    <li>在 Elements 面板中找到這段文字</li>
+                    <li>雙擊文字內容，修改成你想要的文字</li>
+                    <li>修改紅色方塊的顏色（在 Styles 區域找到 background 屬性）</li>
+                    <li>嘗試修改方塊的大小（width 和 height）</li>
+                </ul>
+            </div>
+            
+            <div class="hidden-element" id="secretMessage">
+                🎉 恭喜！你找到了隱藏的元素！這就是 Elements 面板的強大之處。
+            </div>
+            
+            <div class="task-box">
+                <strong>✅ 任務 3：找出隱藏元素</strong>
+                <ul>
+                    <li>在這個頁面的 Elements 中搜尋 class="hidden-element"</li>
+                    <li>找到後，修改 display: none 為 display: block</li>
+                    <li>觀察隱藏的訊息顯示出來了！</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Console 面板 -->
+        <div class="section">
+            <h2>💻 Console 面板（控制台）</h2>
+            
+            <div class="info-box">
+                <strong>用途：</strong>執行 JavaScript 程式碼、查看錯誤訊息、進行除錯
+            </div>
+            
+            <h3>基本 Console 指令</h3>
+            <div class="console-demo">
+<span class="prompt">&gt;</span> console.log("Hello World!")
+<span class="output">Hello World!</span>
+
+<span class="prompt">&gt;</span> 2 + 2
+<span class="output">4</span>
+
+<span class="prompt">&gt;</span> document.title
+<span class="output">"開發者工具教學"</span>
+
+<span class="prompt">&gt;</span> alert("測試警告")
+<span class="output">(彈出警告視窗)</span>
+            </div>
+            
+            <div class="demo-area">
+                <button class="demo-button" onclick="consoleDemo()">點我在 Console 顯示訊息</button>
+                <button class="demo-button" onclick="console.log('這是一條 log 訊息')">Log 訊息</button>
+                <button class="demo-button" onclick="console.warn('這是一條警告訊息')">警告訊息</button>
+                <button class="demo-button" onclick="console.error('這是一條錯誤訊息')">錯誤訊息</button>
+            </div>
+            
+            <div class="task-box">
+                <strong>✅ 任務 4：使用 Console</strong>
+                <ul>
+                    <li>開啟 Console 面板</li>
+                    <li>輸入 <code>document.title</code> 並按 Enter，查看網頁標題</li>
+                    <li>輸入 <code>document.body.style.background = "lightblue"</code> 改變背景色</li>
+                    <li>輸入 <code>alert(document.cookie)</code> 查看 Cookie（如果有的話）</li>
+                    <li>點擊上方按鈕，觀察 Console 的不同訊息類型</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Network 面板 -->
+        <div class="section">
+            <h2>🌐 Network 面板（網路監控）</h2>
+            
+            <div class="info-box">
+                <strong>用途：</strong>監控所有網路請求、查看 HTTP Headers、檢查請求和回應內容
+            </div>
+            
+            <h3>常見的請求類型</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>類型</th>
+                        <th>說明</th>
+                        <th>檔案類型</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Document</td>
+                        <td>HTML 文件</td>
+                        <td>.html</td>
+                    </tr>
+                    <tr>
+                        <td>Stylesheet</td>
+                        <td>CSS 樣式表</td>
+                        <td>.css</td>
+                    </tr>
+                    <tr>
+                        <td>Script</td>
+                        <td>JavaScript 腳本</td>
+                        <td>.js</td>
+                    </tr>
+                    <tr>
+                        <td>XHR / Fetch</td>
+                        <td>API 請求</td>
+                        <td>JSON, XML 等</td>
+                    </tr>
+                    <tr>
+                        <td>Image</td>
+                        <td>圖片檔案</td>
+                        <td>.jpg, .png, .svg</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="api-demo">
+                <h3>模擬 API 請求</h3>
+                <button class="demo-button" onclick="fetchDemo()">發送 API 請求</button>
+                <div id="apiResult"></div>
+            </div>
+            
+            <div class="task-box">
+                <strong>✅ 任務 5：監控網路請求</strong>
+                <ul>
+                    <li>開啟 Network 面板</li>
+                    <li>重新載入這個頁面（F5 或 Cmd+R）</li>
+                    <li>觀察所有被載入的資源</li>
+                    <li>點擊「發送 API 請求」按鈕</li>
+                    <li>在 Network 面板找到這個請求</li>
+                    <li>查看 Headers（標頭）和 Response（回應）內容</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Application 面板 -->
+        <div class="section">
+            <h2>💾 Application 面板（應用程式）</h2>
+            
+            <div class="info-box">
+                <strong>用途：</strong>查看和管理 Cookie、LocalStorage、SessionStorage、IndexedDB 等儲存資料
+            </div>
+            
+            <h3>儲存資料示範</h3>
+            <div class="demo-area">
+                <input type="text" id="storageKey" placeholder="Key" class="demo-input" />
+                <input type="text" id="storageValue" placeholder="Value" class="demo-input" />
+                <button class="demo-button" onclick="saveToStorage()">儲存到 LocalStorage</button>
+                <button class="demo-button" onclick="readFromStorage()">讀取 LocalStorage</button>
+                <button class="demo-button" onclick="clearStorage()">清除 LocalStorage</button>
+                <div class="demo-output" id="storageOutput"></div>
+            </div>
+            
+            <div class="task-box">
+                <strong>✅ 任務 6：管理儲存資料</strong>
+                <ul>
+                    <li>開啟 Application 面板</li>
+                    <li>在左側找到 Local Storage</li>
+                    <li>使用上方的輸入框儲存一些資料</li>
+                    <li>在 Application 面板中查看剛才儲存的資料</li>
+                    <li>嘗試直接在 Application 面板修改或刪除資料</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Sources 面板 -->
+        <div class="section">
+            <h2>📁 Sources 面板（來源）</h2>
+            
+            <div class="info-box">
+                <strong>用途：</strong>查看網站的所有原始碼、設定中斷點進行除錯
+            </div>
+            
+            <div class="demo-area">
+                <button class="demo-button" onclick="debugDemo()">測試除錯功能</button>
+                <div class="demo-output" id="debugOutput"></div>
+            </div>
+            
+            <div class="task-box">
+                <strong>✅ 任務 7：使用除錯功能</strong>
+                <ul>
+                    <li>開啟 Sources 面板</li>
+                    <li>找到這個 HTML 文件</li>
+                    <li>在 debugDemo 函數的第一行設定中斷點（點擊行號）</li>
+                    <li>點擊「測試除錯功能」按鈕</li>
+                    <li>觀察程式執行停在中斷點</li>
+                    <li>使用 Step Over（F10）逐步執行</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 實戰練習 -->
+        <div class="section">
+            <h2>🎯 綜合實戰練習</h2>
+            
+            <div class="demo-area">
+                <h3>登入表單</h3>
+                <form id="loginForm" onsubmit="return handleLogin(event)">
+                    <input type="text" id="username" placeholder="帳號" class="demo-input" required />
+                    <input type="password" id="password" placeholder="密碼" class="demo-input" required />
+                    <button type="submit" class="demo-button">登入</button>
+                </form>
+                <div class="demo-output" id="loginOutput"></div>
+            </div>
+            
+            <div class="task-box">
+                <strong>✅ 綜合任務：分析登入流程</strong>
+                <ul>
+                    <li>開啟 Network 面板</li>
+                    <li>輸入任意帳號密碼並登入</li>
+                    <li>觀察是否有網路請求被發送（這個範例沒有，但實際網站會有）</li>
+                    <li>在 Console 輸入 <code>document.getElementById('password').value</code></li>
+                    <li>思考：這展示了什麼安全問題？</li>
+                    <li>使用 Elements 面板修改密碼欄位的 type 從 password 變成 text</li>
+                    <li>觀察密碼變成明文顯示</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 總結 -->
+        <div class="section" style="background: #e8f5e9;">
+            <h2 style="color: #2e7d32;">📚 學習重點總結</h2>
+            
+            <h3>🔹 Elements 面板</h3>
+            <p>查看和修改 HTML/CSS，找出隱藏元素，分析網頁結構</p>
+            
+            <h3>🔹 Console 面板</h3>
+            <p>執行 JavaScript、查看錯誤、測試程式碼片段</p>
+            
+            <h3>🔹 Network 面板</h3>
+            <p>監控所有網路請求、分析 HTTP Headers、檢查 API 回應</p>
+            
+            <h3>🔹 Application 面板</h3>
+            <p>管理 Cookie、LocalStorage、查看儲存的資料</p>
+            
+            <h3>🔹 Sources 面板</h3>
+            <p>查看原始碼、設定中斷點、進行程式除錯</p>
+            
+            <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
+                <strong>💡 資安測試小提示：</strong>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>使用 Elements 檢查前端驗證是否可被繞過</li>
+                    <li>使用 Console 測試 XSS Payload</li>
+                    <li>使用 Network 分析 API 請求，尋找敏感資訊</li>
+                    <li>使用 Application 查看是否有敏感資料存在 Cookie 或 LocalStorage</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Console 示範
+        function consoleDemo() {
+            console.log('這是普通的 log 訊息');
+            console.info('這是 info 資訊');
+            console.warn('這是警告訊息');
+            console.error('這是錯誤訊息');
+            console.table({name: '小明', age: 25, city: '台北'});
+        }
+        
+        // Network 示範 - 發送 API 請求
+        function fetchDemo() {
+            const result = document.getElementById('apiResult');
+            result.textContent = '正在發送請求...';
+            
+            // 使用公開的測試 API
+            fetch('https://jsonplaceholder.typicode.com/posts/1')
+                .then(response => response.json())
+                .then(data => {
+                    result.textContent = JSON.stringify(data, null, 2);
+                    console.log('API 回應：', data);
+                })
+                .catch(error => {
+                    result.textContent = '請求失敗：' + error;
+                    console.error('錯誤：', error);
+                });
+        }
+        
+        // LocalStorage 示範
+        function saveToStorage() {
+            const key = document.getElementById('storageKey').value;
+            const value = document.getElementById('storageValue').value;
+            
+            if (key && value) {
+                localStorage.setItem(key, value);
+                document.getElementById('storageOutput').innerHTML = 
+                    `✅ 已儲存：<strong>${key}</strong> = ${value}`;
+            } else {
+                alert('請輸入 Key 和 Value！');
+            }
+        }
+        
+        function readFromStorage() {
+            const allData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                allData[key] = localStorage.getItem(key);
+            }
+            
+            document.getElementById('storageOutput').innerHTML = 
+                '<strong>LocalStorage 內容：</strong><br>' + 
+                JSON.stringify(allData, null, 2);
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            document.getElementById('storageOutput').innerHTML = 
+                '✅ LocalStorage 已清空';
+        }
+        
+        // 除錯示範
+        function debugDemo() {
+            console.log('步驟 1：開始執行');
+            const message = '這是除錯測試';
+            console.log('步驟 2：訊息內容 =', message);
+            const result = message.length;
+            console.log('步驟 3：訊息長度 =', result);
+            document.getElementById('debugOutput').innerHTML = 
+                `除錯完成！訊息「${message}」的長度是 ${result}`;
+        }
+        
+        // 登入表單處理
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('登入嘗試：', {username, password});
+            
+            document.getElementById('loginOutput').innerHTML = 
+                `<div style="color: #2e7d32;">✅ 登入成功！歡迎 ${username}</div>
+                <div style="color: #999; margin-top: 10px; font-size: 13px;">
+                ⚠️ 提示：在 Console 可以看到密碼被記錄了，這是不安全的做法！
+                </div>`;
+            
+            return false;
+        }
+        
+        // 頁面載入時的歡迎訊息
+        console.log('%c👋 歡迎使用開發者工具教學！', 'color: #667eea; font-size: 20px; font-weight: bold;');
+        console.log('%c請跟隨教學完成各項任務', 'color: #666; font-size: 14px;');
+    </script>
+</body>
+</html>

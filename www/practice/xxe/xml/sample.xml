@@ -1,0 +1,6 @@
+<?xml version="1.0" standalone="yes" ?>
+<!DOCTYPE author [
+  <!ELEMENT author (#PCDATA)>
+  <!ENTITY name "Fei">
+]>
+<author>&name;</author>

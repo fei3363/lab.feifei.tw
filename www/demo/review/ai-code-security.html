@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成式AI 程式碼安全 + 上線前檢查清單</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section h3 {
+            color: #764ba2;
+            font-size: 1.5em;
+            margin: 25px 0 15px 0;
+        }
+
+        .danger-card {
+            background: #fff5f5;
+            border-left: 5px solid #f56565;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .danger-card:hover {
+            transform: translateX(5px);
+        }
+
+        .danger-card h4 {
+            color: #c53030;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .code-bad {
+            border-left: 4px solid #f56565;
+        }
+
+        .code-good {
+            border-left: 4px solid #48bb78;
+        }
+
+        .checklist {
+            background: #f7fafc;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .checklist-item:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex-grow: 1;
+            font-size: 1.05em;
+        }
+
+        .interactive-section {
+            background: linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .code-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            resize: vertical;
+            margin: 15px 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .result-critical {
+            background: #fff5f5;
+            border-color: #f56565;
+        }
+
+        .result-warning {
+            background: #fffbeb;
+            border-color: #f59e0b;
+        }
+
+        .result-info {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+
+        .result-success {
+            background: #f0fdf4;
+            border-color: #10b981;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .badge-critical {
+            background: #fee;
+            color: #c53030;
+        }
+
+        .badge-warning {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .tips-box {
+            background: #e6fffa;
+            border: 2px solid #2dd4bf;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .tips-box h4 {
+            color: #0f766e;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section h2 {
+                font-size: 1.5em;
+            }
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ 生成式AI 程式碼安全</h1>
+            <p>AI 產碼的盲點檢查 + 上線前安全檢查清單</p>
+        </header>
+
+        <div class="content">
+            <!-- AI 產碼的盲點 -->
+            <section class="section">
+                <h2>⚠️ AI 產碼的常見盲點</h2>
+                <p style="margin-bottom: 20px;">AI 生成的程式碼雖然快速方便，但常常會忽略安全性考量。以下是最常見的安全漏洞：</p>
+
+                <div class="danger-card">
+                    <h4>1. 亂用 eval() 執行不安全的程式碼</h4>
+                    <p><strong>問題：</strong>AI 常常直接使用 eval() 來執行動態程式碼，這會造成嚴重的安全漏洞。</p>
+                    <div class="code-block code-bad">
+// ❌ 危險！AI 常產生這種程式碼
+function calculate(userInput) {
+    return eval(userInput);  // 使用者可以輸入任何程式碼！
+}</div>
+                    <div class="code-block code-good">
+// ✅ 安全做法：使用 Function 建構子或其他安全方法
+function calculate(expression) {
+    const operators = {
+        '+': (a, b) => a + b,
+        '-': (a, b) => a - b,
+        '*': (a, b) => a * b,
+        '/': (a, b) => a / b
+    };
+    // 解析並安全執行運算
+}</div>
+                    <div class="tips-box">
+                        <h4>💡 修復建議</h4>
+                        <ul>
+                            <li>完全避免使用 eval()、new Function() 等動態執行函數</li>
+                            <li>改用安全的解析器或白名單機制</li>
+                            <li>如果真的需要，嚴格驗證和限制輸入內容</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="danger-card">
+                    <h4>2. 缺乏輸入驗證與清理</h4>
+                    <p><strong>問題：</strong>AI 產生的程式碼常常直接使用使用者輸入，沒有任何檢查。</p>
+                    <div class="code-block code-bad">
+// ❌ 危險！沒有驗證使用者輸入
+app.get('/user/:id', (req, res) => {
+    const query = `SELECT * FROM users WHERE id = ${req.params.id}`;
+    db.query(query);  // SQL Injection 漏洞！
+});</div>
+                    <div class="code-block code-good">
+// ✅ 安全做法：使用參數化查詢
+app.get('/user/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id) || id < 1) {
+        return res.status(400).send('無效的 ID');
+    }
+    const query = 'SELECT * FROM users WHERE id = ?';
+    db.query(query, [id]);
+});</div>
+                    <div class="tips-box">
+                        <h4>💡 修復建議</h4>
+                        <ul>
+                            <li>所有使用者輸入都要進行型別驗證</li>
+                            <li>使用參數化查詢防止 SQL Injection</li>
+                            <li>對輸出內容進行 HTML 編碼，防止 XSS</li>
+                            <li>設定輸入長度和格式限制</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="danger-card">
+                    <h4>3. 敏感資料直接寫在程式碼裡</h4>
+                    <p><strong>問題：</strong>AI 會把 API 金鑰、密碼等敏感資訊直接寫在程式碼中。</p>
+                    <div class="code-block code-bad">
+// ❌ 危險！敏感資料暴露
+const API_KEY = 'sk-1234567890abcdef';
+const DB_PASSWORD = 'mypassword123';
+const SECRET_TOKEN = 'super_secret_token';</div>
+                    <div class="code-block code-good">
+// ✅ 安全做法：使用環境變數
+require('dotenv').config();
+const API_KEY = process.env.API_KEY;
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const SECRET_TOKEN = process.env.SECRET_TOKEN;</div>
+                    <div class="tips-box">
+                        <h4>💡 修復建議</h4>
+                        <ul>
+                            <li>使用環境變數或密鑰管理服務</li>
+                            <li>將 .env 檔案加入 .gitignore</li>
+                            <li>定期輪換敏感金鑰</li>
+                            <li>使用密鑰管理工具（如 AWS Secrets Manager）</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="danger-card">
+                    <h4>4. 缺乏錯誤處理與過度暴露錯誤訊息</h4>
+                    <p><strong>問題：</strong>AI 產生的錯誤訊息常常包含太多系統資訊。</p>
+                    <div class="code-block code-bad">
+// ❌ 危險！暴露過多系統資訊
+try {
+    db.connect();
+} catch (error) {
+    res.send(`資料庫連線失敗: ${error.stack}`);  // 洩漏系統結構！
+}</div>
+                    <div class="code-block code-good">
+// ✅ 安全做法：記錄詳細錯誤，只回傳通用訊息
+try {
+    db.connect();
+} catch (error) {
+    console.error('資料庫連線錯誤:', error);  // 記錄完整錯誤
+    res.status(500).send('服務暫時無法使用，請稍後再試');  // 通用訊息
+}</div>
+                </div>
+
+                <div class="danger-card">
+                    <h4>5. 缺乏權限控制和身份驗證</h4>
+                    <p><strong>問題：</strong>AI 產生的 API 端點常常沒有檢查使用者權限。</p>
+                    <div class="code-block code-bad">
+// ❌ 危險！沒有權限檢查
+app.delete('/admin/user/:id', (req, res) => {
+    deleteUser(req.params.id);  // 任何人都能刪除使用者！
+});</div>
+                    <div class="code-block code-good">
+// ✅ 安全做法：加入身份驗證和權限檢查
+app.delete('/admin/user/:id', 
+    authenticateToken,  // 驗證 token
+    requireAdmin,       // 檢查管理員權限
+    (req, res) => {
+        deleteUser(req.params.id);
+    }
+);</div>
+                </div>
+            </section>
+
+            <!-- 快速審查程式碼 -->
+            <section class="section">
+                <h2>🔍 如何快速審查 AI 產生的程式碼</h2>
+                
+                <h3>基本審查步驟</h3>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check1">
+                        <label for="check1"><strong>搜尋危險函數：</strong>搜尋 eval(), innerHTML, dangerouslySetInnerHTML, exec() 等危險函數</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check2">
+                        <label for="check2"><strong>檢查輸入處理：</strong>確認所有使用者輸入都有經過驗證和清理</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check3">
+                        <label for="check3"><strong>查看資料庫查詢：</strong>確保使用參數化查詢，避免字串拼接</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check4">
+                        <label for="check4"><strong>檢查敏感資料：</strong>搜尋 password, secret, key, token 等關鍵字，確認沒有硬編碼</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check5">
+                        <label for="check5"><strong>審查錯誤處理：</strong>確保錯誤訊息不會洩漏系統資訊</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="check6">
+                        <label for="check6"><strong>權限檢查：</strong>確認敏感操作都有適當的身份驗證和授權</label>
+                    </div>
+                </div>
+
+                <h3>快速檢查關鍵字清單</h3>
+                <div class="tips-box">
+                    <h4>🔎 在程式碼中搜尋這些關鍵字：</h4>
+                    <ul style="columns: 2; margin-top: 10px;">
+                        <li><span class="highlight">eval(</span></li>
+                        <li><span class="highlight">innerHTML</span></li>
+                        <li><span class="highlight">document.write(</span></li>
+                        <li><span class="highlight">exec(</span></li>
+                        <li><span class="highlight">password</span></li>
+                        <li><span class="highlight">secret</span></li>
+                        <li><span class="highlight">api_key</span></li>
+                        <li><span class="highlight">token</span></li>
+                        <li><span class="highlight">SELECT * FROM</span></li>
+                        <li><span class="highlight">WHERE ${</span></li>
+                        <li><span class="highlight">req.params</span></li>
+                        <li><span class="highlight">req.query</span></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 部署前檢查清單 -->
+            <section class="section">
+                <h2>✅ 上線前安全檢查清單</h2>
+                <p style="margin-bottom: 20px;">在部署到正式環境前，請確認以下所有項目：</p>
+
+                <h3>🔐 安全性檢查</h3>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy1" onchange="updateProgress()">
+                        <label for="deploy1">所有敏感資料都使用環境變數，並已從程式碼中移除</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy2" onchange="updateProgress()">
+                        <label for="deploy2">所有使用者輸入都經過驗證和清理</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy3" onchange="updateProgress()">
+                        <label for="deploy3">資料庫查詢都使用參數化查詢或 ORM</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy4" onchange="updateProgress()">
+                        <label for="deploy4">已設定 HTTPS/SSL 憑證</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy5" onchange="updateProgress()">
+                        <label for="deploy5">設定了適當的 CORS 政策</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy6" onchange="updateProgress()">
+                        <label for="deploy6">實作了速率限制（Rate Limiting）</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy7" onchange="updateProgress()">
+                        <label for="deploy7">設定了安全標頭（CSP, X-Frame-Options 等）</label>
+                    </div>
+                </div>
+
+                <h3>🔑 身份驗證與授權</h3>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy8" onchange="updateProgress()">
+                        <label for="deploy8">所有敏感端點都需要身份驗證</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy9" onchange="updateProgress()">
+                        <label for="deploy9">實作了適當的權限控制機制</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy10" onchange="updateProgress()">
+                        <label for="deploy10">密碼使用安全的雜湊演算法（bcrypt、scrypt 等）</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy11" onchange="updateProgress()">
+                        <label for="deploy11">Session/Token 有適當的過期時間</label>
+                    </div>
+                </div>
+
+                <h3>📝 日誌與監控</h3>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy12" onchange="updateProgress()">
+                        <label for="deploy12">設定了錯誤日誌記錄</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy13" onchange="updateProgress()">
+                        <label for="deploy13">日誌中不包含敏感資料</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy14" onchange="updateProgress()">
+                        <label for="deploy14">設定了安全事件監控和告警</label>
+                    </div>
+                </div>
+
+                <h3>🧪 測試與文件</h3>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy15" onchange="updateProgress()">
+                        <label for="deploy15">完成安全性測試（包含 SQL Injection、XSS 測試）</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy16" onchange="updateProgress()">
+                        <label for="deploy16">更新相依套件到最新的安全版本</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy17" onchange="updateProgress()">
+                        <label for="deploy17">執行漏洞掃描工具檢查</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="deploy18" onchange="updateProgress()">
+                        <label for="deploy18">準備好事件應變計畫</label>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar">0%</div>
+                </div>
+            </section>
+
+            <!-- 互動式程式碼檢查工具 -->
+            <!-- <section class="section">
+                <h2>🛠️ 互動式程式碼安全檢查工具</h2>
+                <p style="margin-bottom: 20px;">貼上您的程式碼，系統會自動檢查常見的安全問題並提供修復建議：</p>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 15px;">貼上您的程式碼：</h3>
+                    <textarea class="code-input" id="codeInput" placeholder="// 在這裡貼上您的 JavaScript 程式碼...
+// 例如：
+function processUser(input) {
+    eval(input);
+    const query = 'SELECT * FROM users WHERE id = ' + input;
+}"></textarea>
+                    <button class="btn" onclick="analyzeCode()">🔍 開始安全檢查</button>
+
+                    <div class="results" id="results">
+                        <h3 style="margin-bottom: 20px;">檢查結果：</h3>
+                        <div id="resultsList"></div>
+                    </div>
+                </div>
+            </section> -->
+        </div>
+    </div>
+
+    <script>
+        // 更新進度條
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.checklist input[type="checkbox"][id^="deploy"]');
+            const checked = document.querySelectorAll('.checklist input[type="checkbox"][id^="deploy"]:checked').length;
+            const total = checkboxes.length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+        }
+
+        // 程式碼安全分析
+        function analyzeCode() {
+            const code = document.getElementById('codeInput').value;
+            const results = document.getElementById('results');
+            const resultsList = document.getElementById('resultsList');
+            
+            if (!code.trim()) {
+                alert('請先輸入程式碼！');
+                return;
+            }
+
+            results.style.display = 'block';
+            resultsList.innerHTML = '';
+
+            const issues = [];
+
+            // 檢查 eval()
+            if (code.includes('eval(')) {
+                issues.push({
+                    severity: 'critical',
+                    title: '發現危險的 eval() 函數',
+                    description: '程式碼中使用了 eval()，這會讓攻擊者執行任意程式碼。',
+                    fix: '移除 eval() 並改用安全的替代方案，例如 JSON.parse()（處理 JSON）或建立明確的函數對應表。'
+                });
+            }
+
+            // 檢查 innerHTML
+            if (code.includes('innerHTML')) {
+                issues.push({
+                    severity: 'critical',
+                    title: '發現 innerHTML 可能的 XSS 風險',
+                    description: '直接設定 innerHTML 可能導致跨站腳本攻擊（XSS）。',
+                    fix: '改用 textContent 或 innerText，或者使用 DOMPurify 等函式庫清理 HTML 內容。'
+                });
+            }
+
+            // 檢查 SQL 字串拼接
+            if ((code.includes('SELECT') || code.includes('INSERT') || code.includes('UPDATE') || code.includes('DELETE')) 
+                && (code.includes('+') || code.includes('${') || code.includes('`'))) {
+                issues.push({
+                    severity: 'critical',
+                    title: '可能的 SQL Injection 漏洞',
+                    description: '偵測到 SQL 查詢使用字串拼接，容易遭受 SQL Injection 攻擊。',
+                    fix: '使用參數化查詢或 ORM（如 Sequelize、TypeORM），例如：db.query("SELECT * FROM users WHERE id = ?", [userId])'
+                });
+            }
+
+            // 檢查敏感資料
+            const sensitiveKeywords = ['password', 'secret', 'api_key', 'apikey', 'token', 'private_key'];
+            sensitiveKeywords.forEach(keyword => {
+                const regex = new RegExp(`(const|let|var)\\s+\\w*${keyword}\\w*\\s*=\\s*['"\`]`, 'i');
+                if (regex.test(code)) {
+                    issues.push({
+                        severity: 'critical',
+                        title: '敏感資料硬編碼',
+                        description: `發現 "${keyword}" 可能被硬編碼在程式碼中。`,
+                        fix: '將敏感資料移到環境變數（.env 檔案）中，並使用 process.env.VARIABLE_NAME 讀取。記得將 .env 加入 .gitignore。'
+                    });
+                }
+            });
+
+            // 檢查缺乏輸入驗證
+            if ((code.includes('req.params') || code.includes('req.query') || code.includes('req.body')) 
+                && !code.includes('validate') && !code.includes('isNaN') && !code.includes('parseInt')) {
+                issues.push({
+                    severity: 'warning',
+                    title: '可能缺乏輸入驗證',
+                    description: '偵測到使用 req.params、req.query 或 req.body，但沒有明顯的驗證程式碼。',
+                    fix: '加入輸入驗證：檢查型別、範圍、格式。可使用 Joi、express-validator 等驗證函式庫。'
+                });
+            }
+
+            // 檢查錯誤處理
+            if (code.includes('catch') && (code.includes('.stack') || code.includes('error.message'))) {
+                issues.push({
+                    severity: 'warning',
+                    title: '錯誤訊息可能洩漏資訊',
+                    description: '在錯誤處理中直接回傳錯誤堆疊或詳細訊息可能洩漏系統資訊。',
+                    fix: '記錄詳細錯誤到日誌系統，但只回傳通用的錯誤訊息給使用者，例如「服務暫時無法使用」。'
+                });
+            }
+
+            // 檢查 document.write
+            if (code.includes('document.write')) {
+                issues.push({
+                    severity: 'warning',
+                    title: '使用不安全的 document.write()',
+                    description: 'document.write() 可能導致安全問題，且會影響頁面效能。',
+                    fix: '改用 DOM 操作方法，如 createElement() 和 appendChild()。'
+                });
+            }
+
+            // 檢查缺乏 HTTPS
+            if (code.includes('http://') && !code.includes('localhost')) {
+                issues.push({
+                    severity: 'warning',
+                    title: '使用不安全的 HTTP 連線',
+                    description: '偵測到使用 HTTP 而非 HTTPS，資料傳輸未加密。',
+                    fix: '將所有外部 API 呼叫改用 HTTPS。在正式環境強制使用 HTTPS。'
+                });
+            }
+
+            // 顯示結果
+            if (issues.length === 0) {
+                resultsList.innerHTML = `
+                    <div class="result-item result-success">
+                        <h4>✅ 太棒了！</h4>
+                        <p>沒有發現明顯的安全問題。不過還是建議：</p>
+                        <ul>
+                            <li>執行完整的安全性測試</li>
+                            <li>使用專業的靜態程式碼分析工具</li>
+                            <li>定期更新相依套件</li>
+                            <li>進行同儕程式碼審查</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                issues.forEach((issue, index) => {
+                    const severityClass = `result-${issue.severity}`;
+                    const badgeClass = `badge-${issue.severity}`;
+                    const severityText = {
+                        'critical': '🚨 嚴重',
+                        'warning': '⚠️ 警告',
+                        'info': 'ℹ️ 資訊'
+                    };
+
+                    resultsList.innerHTML += `
+                        <div class="result-item ${severityClass}">
+                            <h4>
+                                <span class="badge ${badgeClass}">${severityText[issue.severity]}</span>
+                                ${issue.title}
+                            </h4>
+                            <p><strong>問題：</strong>${issue.description}</p>
+                            <p><strong>✨ 修復建議：</strong>${issue.fix}</p>
+                        </div>
+                    `;
+                });
+
+                // 加入總結
+                const criticalCount = issues.filter(i => i.severity === 'critical').length;
+                const warningCount = issues.filter(i => i.severity === 'warning').length;
+
+                resultsList.innerHTML += `
+                    <div class="result-item result-info">
+                        <h4>📊 檢查總結</h4>
+                        <p>
+                            找到 <strong>${issues.length}</strong> 個潛在問題：
+                            ${criticalCount > 0 ? `<span class="badge badge-critical">${criticalCount} 個嚴重問題</span>` : ''}
+                            ${warningCount > 0 ? `<span class="badge badge-warning">${warningCount} 個警告</span>` : ''}
+                        </p>
+                        <p style="margin-top: 10px;">
+                            ${criticalCount > 0 ? '⚠️ 建議立即修復所有嚴重問題再上線！' : '✅ 沒有發現嚴重問題，但仍建議處理警告項目。'}
+                        </p>
+                    </div>
+                `;
+            }
+
+            // 滾動到結果
+            results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // 初始化進度條
+        updateProgress();
+    </script>
+</body>
+</html>

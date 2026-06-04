@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Injection 互動式教學系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 15px 25px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .content-section {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin: 25px 0 15px 0;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        .code-block code {
+            display: block;
+            white-space: pre;
+        }
+
+        .keyword { color: #ff79c6; }
+        .string { color: #f1fa8c; }
+        .comment { color: #6272a4; font-style: italic; }
+        .function { color: #8be9fd; }
+
+        .demo-box {
+            background: #f7f9fc;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .result-box {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            min-height: 100px;
+        }
+
+        .result-box.vulnerable {
+            border-color: #f5576c;
+            background: #fff5f5;
+        }
+
+        .result-box.safe {
+            border-color: #00f2fe;
+            background: #f0fffe;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .alert-danger {
+            background: #fff5f5;
+            border-left: 4px solid #f5576c;
+            color: #c53030;
+        }
+
+        .alert-success {
+            background: #f0fffe;
+            border-left: 4px solid #00f2fe;
+            color: #0e7490;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f7f9fc;
+        }
+
+        .query-display {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+
+        .step-indicator {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .step {
+            flex: 1;
+            padding: 15px;
+            background: #f7f9fc;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #f59e0b;
+        }
+
+        .tip-box strong {
+            color: #92400e;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .practice-area {
+            background: #f0f4f8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ SQL Injection 互動式教學系統</h1>
+            <p class="subtitle">從基礎到進階：了解 SQL 注入攻擊與防護</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('tab1')">📚 SQL 基礎</button>
+            <button class="tab-button" onclick="showTab('tab2')">⚠️ SQL Injection 成因</button>
+            <button class="tab-button" onclick="showTab('tab3')">🔗 Union Select 注入</button>
+            <button class="tab-button" onclick="showTab('tab4')">🕵️ 盲注攻擊</button>
+            <button class="tab-button" onclick="showTab('tab5')">🤖 AI 時代的防護</button>
+        </div>
+
+        <!-- Tab 1: SQL 基礎 -->
+        <div id="tab1" class="content-section active">
+            <h2>📚 SQL 是什麼？</h2>
+            
+            <p><strong>SQL (Structured Query Language，結構化查詢語言)</strong> 是用來管理關聯式資料庫的標準語言。就像你跟資料庫「溝通」的語言一樣。</p>
+
+            <h3>🔹 常用的 SQL 語法</h3>
+
+            <div class="two-column">
+                <div>
+                    <h4>1️⃣ SELECT - 查詢資料</h4>
+                    <div class="code-block">
+<code><span class="comment">-- 查詢所有使用者</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users;
+
+<span class="comment">-- 查詢特定欄位</span>
+<span class="keyword">SELECT</span> username, email 
+<span class="keyword">FROM</span> users;
+
+<span class="comment">-- 條件查詢</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users 
+<span class="keyword">WHERE</span> username = <span class="string">'admin'</span>;</code>
+                    </div>
+                </div>
+
+                <div>
+                    <h4>2️⃣ INSERT - 新增資料</h4>
+                    <div class="code-block">
+<code><span class="comment">-- 新增一筆使用者資料</span>
+<span class="keyword">INSERT INTO</span> users 
+  (username, password, email)
+<span class="keyword">VALUES</span> 
+  (<span class="string">'john'</span>, <span class="string">'pass123'</span>, <span class="string">'john@example.com'</span>);</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <h4>3️⃣ UPDATE - 更新資料</h4>
+                    <div class="code-block">
+<code><span class="comment">-- 更新使用者密碼</span>
+<span class="keyword">UPDATE</span> users 
+<span class="keyword">SET</span> password = <span class="string">'newpass'</span>
+<span class="keyword">WHERE</span> username = <span class="string">'john'</span>;</code>
+                    </div>
+                </div>
+
+                <div>
+                    <h4>4️⃣ DELETE - 刪除資料</h4>
+                    <div class="code-block">
+<code><span class="comment">-- 刪除特定使用者</span>
+<span class="keyword">DELETE FROM</span> users 
+<span class="keyword">WHERE</span> username = <span class="string">'john'</span>;</code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>🔹 進階語法</h3>
+
+            <div class="code-block">
+<code><span class="comment">-- UNION：合併多個查詢結果</span>
+<span class="keyword">SELECT</span> username <span class="keyword">FROM</span> users
+<span class="keyword">UNION</span>
+<span class="keyword">SELECT</span> email <span class="keyword">FROM</span> customers;
+
+<span class="comment">-- ORDER BY：排序結果</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> products 
+<span class="keyword">ORDER BY</span> price <span class="keyword">DESC</span>;
+
+<span class="comment">-- LIMIT：限制結果數量</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users 
+<span class="keyword">LIMIT</span> 10;</code>
+            </div>
+
+            <div class="demo-box">
+                <h3>💡 互動練習：SQL 查詢模擬器</h3>
+                <p>試試看執行不同的 SQL 查詢！</p>
+                
+                <div class="input-group">
+                    <label>輸入 SQL 查詢：</label>
+                    <input type="text" id="sqlQuery" placeholder="例如：SELECT * FROM users WHERE id = 1" value="SELECT * FROM users">
+                </div>
+                
+                <button class="btn" onclick="executeSQL()">🚀 執行查詢</button>
+                
+                <div class="result-box" id="sqlResult">
+                    <p style="color: #999;">查詢結果會顯示在這裡...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: SQL Injection 成因 -->
+        <div id="tab2" class="content-section">
+            <h2>⚠️ SQL Injection 發生成因</h2>
+
+            <div class="alert alert-danger">
+                <strong>⚠️ 什麼是 SQL Injection？</strong><br>
+                SQL 注入是一種網路攻擊手法，攻擊者透過輸入惡意的 SQL 程式碼，讓系統執行非預期的資料庫操作，可能導致資料外洩、被竄改、甚至整個系統被控制。
+            </div>
+
+            <h3>🔹 漏洞成因</h3>
+            
+            <p>當程式直接把使用者的輸入「拼接」到 SQL 查詢中，而沒有做任何檢查或處理時，就會產生漏洞。</p>
+
+            <div class="two-column">
+                <div>
+                    <h4>❌ 有漏洞的程式碼（PHP）</h4>
+                    <div class="code-block">
+<code><span class="comment">// 直接把使用者輸入放進 SQL</span>
+<span class="keyword">$username</span> = <span class="keyword">$_POST</span>[<span class="string">'username'</span>];
+<span class="keyword">$password</span> = <span class="keyword">$_POST</span>[<span class="string">'password'</span>];
+
+<span class="keyword">$sql</span> = <span class="string">"SELECT * FROM users 
+         WHERE username='$username' 
+         AND password='$password'"</span>;
+
+<span class="keyword">$result</span> = <span class="function">mysqli_query</span>(<span class="keyword">$conn</span>, <span class="keyword">$sql</span>);</code>
+                    </div>
+                </div>
+
+                <div>
+                    <h4>✅ 安全的程式碼（PHP）</h4>
+                    <div class="code-block">
+<code><span class="comment">// 使用 Prepared Statement</span>
+<span class="keyword">$username</span> = <span class="keyword">$_POST</span>[<span class="string">'username'</span>];
+<span class="keyword">$password</span> = <span class="keyword">$_POST</span>[<span class="string">'password'</span>];
+
+<span class="keyword">$stmt</span> = <span class="keyword">$conn</span>-><span class="function">prepare</span>(
+  <span class="string">"SELECT * FROM users 
+   WHERE username=? AND password=?"</span>
+);
+<span class="keyword">$stmt</span>-><span class="function">bind_param</span>(<span class="string">"ss"</span>, 
+  <span class="keyword">$username</span>, <span class="keyword">$password</span>);</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h3>💥 互動示範：登入功能的 SQL Injection</h3>
+                
+                <div class="alert alert-warning">
+                    <strong>⚠️ 這是一個有漏洞的登入系統！</strong><br>
+                    試試看能不能繞過登入驗證！
+                </div>
+
+                <div class="input-group">
+                    <label>帳號：</label>
+                    <input type="text" id="vulnUsername" placeholder="試試輸入：admin' OR '1'='1">
+                </div>
+
+                <div class="input-group">
+                    <label>密碼：</label>
+                    <input type="password" id="vulnPassword" placeholder="試試輸入：' OR '1'='1">
+                </div>
+
+                <button class="btn btn-danger" onclick="vulnerableLogin()">🔓 嘗試登入（有漏洞版）</button>
+                <button class="btn btn-success" onclick="safeLogin()">🔒 嘗試登入（安全版）</button>
+
+                <div class="query-display" id="queryDisplay">執行的 SQL 查詢會顯示在這裡...</div>
+
+                <div class="result-box" id="loginResult">
+                    登入結果會顯示在這裡...
+                </div>
+            </div>
+
+            <h3>🔹 常見的注入手法</h3>
+
+            <ol>
+                <li><strong>註解符號攻擊</strong>：使用 <code>--</code> 或 <code>#</code> 註解掉後面的 SQL</li>
+                <li><strong>永真條件</strong>：使用 <code>' OR '1'='1</code> 讓條件永遠成立</li>
+                <li><strong>堆疊查詢</strong>：使用 <code>;</code> 分號執行多個 SQL 語句</li>
+                <li><strong>UNION 查詢</strong>：使用 UNION 合併惡意查詢</li>
+            </ol>
+
+            <div class="code-block">
+<code><span class="comment">-- 註解符號攻擊範例</span>
+輸入：admin'<span class="comment">--</span>
+產生的 SQL：<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> username=<span class="string">'admin'</span><span class="comment">--' AND password='xxx'</span>
+
+<span class="comment">-- 永真條件範例</span>
+輸入：<span class="string">' OR '1'='1</span>
+產生的 SQL：<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> username=<span class="string">''</span> <span class="keyword">OR</span> <span class="string">'1'='1'</span> <span class="keyword">AND</span> password=<span class="string">'xxx'</span></code>
+            </div>
+        </div>
+
+        <!-- Tab 3: Union Select 注入 -->
+        <div id="tab3" class="content-section">
+            <h2>🔗 UNION SELECT SQL Injection</h2>
+
+            <div class="alert alert-info">
+                <strong>📖 什麼是 UNION SELECT 注入？</strong><br>
+                UNION SELECT 是一種進階的 SQL 注入技術，攻擊者利用 UNION 關鍵字來合併兩個查詢的結果，藉此讀取資料庫中的敏感資料。
+            </div>
+
+            <h3>🔹 UNION 的基本概念</h3>
+
+            <p>UNION 可以合併兩個 SELECT 查詢的結果，但有兩個重要條件：</p>
+            <ul>
+                <li>兩個查詢的<strong>欄位數量</strong>必須相同</li>
+                <li>對應欄位的<strong>資料型態</strong>要相容</li>
+            </ul>
+
+            <div class="code-block">
+<code><span class="comment">-- 正常的 UNION 使用</span>
+<span class="keyword">SELECT</span> name, age <span class="keyword">FROM</span> students
+<span class="keyword">UNION</span>
+<span class="keyword">SELECT</span> name, age <span class="keyword">FROM</span> teachers;</code>
+            </div>
+
+            <h3>🔹 攻擊步驟</h3>
+
+            <div class="step-indicator">
+                <div class="step active" onclick="showUnionStep(1)">
+                    <strong>步驟 1</strong><br>
+                    判斷欄位數量
+                </div>
+                <div class="step" onclick="showUnionStep(2)">
+                    <strong>步驟 2</strong><br>
+                    找出顯示位置
+                </div>
+                <div class="step" onclick="showUnionStep(3)">
+                    <strong>步驟 3</strong><br>
+                    取得資料庫資訊
+                </div>
+                <div class="step" onclick="showUnionStep(4)">
+                    <strong>步驟 4</strong><br>
+                    竊取敏感資料
+                </div>
+            </div>
+
+            <div id="unionStep1" class="demo-box">
+                <h4>步驟 1：判斷欄位數量</h4>
+                <p>使用 ORDER BY 或 UNION SELECT NULL 來測試欄位數量</p>
+
+                <div class="code-block">
+<code><span class="comment">-- 方法 1：使用 ORDER BY</span>
+<span class="string">' ORDER BY 1--</span>  <span class="comment">← 沒錯誤</span>
+<span class="string">' ORDER BY 2--</span>  <span class="comment">← 沒錯誤</span>
+<span class="string">' ORDER BY 3--</span>  <span class="comment">← 沒錯誤</span>
+<span class="string">' ORDER BY 4--</span>  <span class="comment">← 出現錯誤！表示有 3 個欄位</span>
+
+<span class="comment">-- 方法 2：使用 UNION SELECT NULL</span>
+<span class="string">' UNION SELECT NULL--</span>        <span class="comment">← 錯誤</span>
+<span class="string">' UNION SELECT NULL,NULL--</span>   <span class="comment">← 錯誤</span>
+<span class="string">' UNION SELECT NULL,NULL,NULL--</span> <span class="comment">← 成功！</span></code>
+                </div>
+
+                <div class="input-group">
+                    <label>試試看判斷欄位數量（提示：產品查詢有 3 個欄位）</label>
+                    <input type="text" id="unionTest1" placeholder="例如：1' ORDER BY 3--">
+                </div>
+                <button class="btn" onclick="testUnionStep1()">🧪 測試</button>
+                <div class="result-box" id="unionResult1"></div>
+            </div>
+
+            <div id="unionStep2" class="demo-box" style="display:none;">
+                <h4>步驟 2：找出顯示位置</h4>
+                <p>使用不同的值來確定哪些欄位會顯示在網頁上</p>
+
+                <div class="code-block">
+<code><span class="comment">-- 使用數字或字串來標記每個欄位</span>
+<span class="string">' UNION SELECT 1,2,3--</span>
+<span class="string">' UNION SELECT 'A','B','C'--</span>
+
+<span class="comment">-- 如果看到網頁顯示 "2" 和 "3"，表示第 2、3 欄位會顯示</span></code>
+                </div>
+
+                <div class="input-group">
+                    <label>輸入測試查詢</label>
+                    <input type="text" id="unionTest2" placeholder="試試：1' UNION SELECT 'TEST1','TEST2','TEST3'--">
+                </div>
+                <button class="btn" onclick="testUnionStep2()">🧪 測試</button>
+                <div class="result-box" id="unionResult2"></div>
+            </div>
+
+            <div id="unionStep3" class="demo-box" style="display:none;">
+                <h4>步驟 3：取得資料庫資訊</h4>
+                <p>利用資料庫的系統資料表來取得結構資訊</p>
+
+                <div class="code-block">
+<code><span class="comment">-- MySQL：查詢資料庫名稱</span>
+<span class="string">' UNION SELECT DATABASE(),USER(),VERSION()--</span>
+
+<span class="comment">-- MySQL：查詢所有資料表</span>
+<span class="string">' UNION SELECT table_name,NULL,NULL FROM information_schema.tables--</span>
+
+<span class="comment">-- MySQL：查詢特定資料表的欄位</span>
+<span class="string">' UNION SELECT column_name,NULL,NULL FROM information_schema.columns WHERE table_name='users'--</span></code>
+                </div>
+
+                <div class="input-group">
+                    <label>輸入資訊查詢</label>
+                    <input type="text" id="unionTest3" placeholder="試試：1' UNION SELECT table_name,'','' FROM information_schema.tables--">
+                </div>
+                <button class="btn" onclick="testUnionStep3()">🧪 測試</button>
+                <div class="result-box" id="unionResult3"></div>
+            </div>
+
+            <div id="unionStep4" class="demo-box" style="display:none;">
+                <h4>步驟 4：竊取敏感資料</h4>
+                <p>現在我們知道資料表結構了，可以直接讀取資料</p>
+
+                <div class="code-block">
+<code><span class="comment">-- 讀取 users 資料表的所有資料</span>
+<span class="string">' UNION SELECT username,password,email FROM users--</span>
+
+<span class="comment">-- 合併多個欄位</span>
+<span class="string">' UNION SELECT CONCAT(username,':',password),NULL,NULL FROM users--</span></code>
+                </div>
+
+                <div class="input-group">
+                    <label>輸入攻擊查詢</label>
+                    <input type="text" id="unionTest4" placeholder="試試：1' UNION SELECT username,password,email FROM users--">
+                </div>
+                <button class="btn btn-danger" onclick="testUnionStep4()">⚠️ 執行攻擊</button>
+                <div class="result-box vulnerable" id="unionResult4"></div>
+            </div>
+
+            <div class="tip-box">
+                <strong>🛡️ 防禦方法：</strong>
+                <ul>
+                    <li>使用 Prepared Statements（參數化查詢）</li>
+                    <li>輸入驗證：檢查資料格式和長度</li>
+                    <li>最小權限原則：資料庫帳號只給必要的權限</li>
+                    <li>關閉錯誤訊息：不要在正式環境顯示詳細錯誤</li>
+                    <li>使用 WAF（Web Application Firewall）</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tab 4: 盲注 -->
+        <div id="tab4" class="content-section">
+            <h2>🕵️ 盲注（Blind SQL Injection）</h2>
+
+            <div class="alert alert-info">
+                <strong>📖 什麼是盲注？</strong><br>
+                當網站不會直接顯示 SQL 查詢結果或錯誤訊息時，攻擊者只能透過「真/假」的反應或「時間延遲」來逐步推測資料庫內容，這就是盲注攻擊。
+            </div>
+
+            <h3>🔹 盲注的類型</h3>
+
+            <div class="two-column">
+                <div>
+                    <h4>1️⃣ Boolean-based 布林盲注</h4>
+                    <p>根據網頁回應的<strong>不同內容</strong>來判斷條件的真假</p>
+                    <div class="code-block">
+<code><span class="comment">-- 測試是否為 admin</span>
+<span class="string">' AND username='admin'--</span>
+
+<span class="comment">-- 逐字猜測密碼</span>
+<span class="string">' AND SUBSTRING(password,1,1)='a'--</span>
+<span class="string">' AND SUBSTRING(password,1,1)='b'--</span>
+<span class="comment">-- 持續測試直到找到正確字元</span></code>
+                    </div>
+                </div>
+
+                <div>
+                    <h4>2️⃣ Time-based 時間盲注</h4>
+                    <p>利用<strong>延遲函數</strong>，根據回應時間來判斷</p>
+                    <div class="code-block">
+<code><span class="comment">-- MySQL 的延遲函數</span>
+<span class="string">' AND IF(1=1, SLEEP(5), 0)--</span>
+
+<span class="comment">-- 猜測第一個字元</span>
+<span class="string">' AND IF(
+  SUBSTRING(password,1,1)='a',
+  SLEEP(5), 0
+)--</span></code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h3>🎯 互動示範：Boolean-based 盲注</h3>
+                
+                <div class="alert alert-warning">
+                    這個登入系統只會告訴你「登入成功」或「登入失敗」，沒有其他資訊
+                </div>
+
+                <div class="input-group">
+                    <label>測試查詢（提示：admin 的密碼第一個字是 's'）</label>
+                    <input type="text" id="blindTest" placeholder="試試：admin' AND SUBSTRING(password,1,1)='s'--">
+                </div>
+
+                <button class="btn" onclick="testBlindInjection()">🧪 測試盲注</button>
+
+                <div class="query-display" id="blindQuery">執行的查詢會顯示在這裡...</div>
+
+                <div class="result-box" id="blindResult">
+                    測試結果會顯示在這裡...
+                </div>
+
+                <div id="blindGuessing" style="display:none; margin-top: 20px;">
+                    <h4>🔍 自動猜測工具</h4>
+                    <p>讓我們用程式自動猜測密碼！</p>
+                    <button class="btn btn-success" onclick="autoGuessPassword()">🤖 開始自動猜測</button>
+                    <div class="result-box" id="guessResult" style="margin-top: 10px;"></div>
+                </div>
+            </div>
+
+            <h3>🔹 Time-based 盲注示範</h3>
+
+            <div class="demo-box">
+                <div class="alert alert-info">
+                    Time-based 盲注會讓伺服器延遲回應，藉此判斷條件真假
+                </div>
+
+                <div class="code-block">
+<code><span class="comment">-- 如果 username 是 admin，就延遲 3 秒</span>
+<span class="string">' AND IF(
+  (SELECT username FROM users WHERE id=1)='admin',
+  SLEEP(3),
+  0
+)--</span>
+
+<span class="comment">-- 逐字猜測資料庫名稱</span>
+<span class="string">' AND IF(
+  SUBSTRING(DATABASE(),1,1)='s',
+  SLEEP(3),
+  0
+)--</span></code>
+                </div>
+
+                <div class="input-group">
+                    <label>測試時間盲注</label>
+                    <input type="text" id="timeBlindTest" placeholder="試試：1' AND IF(1=1, SLEEP(2), 0)--">
+                </div>
+
+                <button class="btn" onclick="testTimeBlindInjection()">⏱️ 測試（會有延遲）</button>
+
+                <div class="result-box" id="timeBlindResult">
+                    <p>觀察回應時間來判斷條件真假...</p>
+                </div>
+            </div>
+
+            <h3>🔹 盲注攻擊流程</h3>
+
+            <div class="practice-area">
+                <ol>
+                    <li><strong>確認漏洞存在</strong>：測試基本的 SQL 語法是否有反應</li>
+                    <li><strong>確定注入點類型</strong>：判斷是 Boolean-based 還是 Time-based</li>
+                    <li><strong>逐步猜測</strong>：
+                        <ul>
+                            <li>先猜測字串長度：<code>LENGTH(password)=5</code></li>
+                            <li>再逐字猜測內容：<code>SUBSTRING(password,1,1)='a'</code></li>
+                        </ul>
+                    </li>
+                    <li><strong>自動化攻擊</strong>：使用工具（如 SQLMap）自動化整個過程</li>
+                </ol>
+            </div>
+
+            <div class="tip-box">
+                <strong>🛡️ 盲注防禦策略：</strong>
+                <ul>
+                    <li><strong>統一回應訊息</strong>：不管成功或失敗都顯示相同訊息</li>
+                    <li><strong>限制查詢時間</strong>：設定 SQL 查詢的最長執行時間</li>
+                    <li><strong>使用 Prepared Statements</strong>：這是最根本的防護</li>
+                    <li><strong>輸入驗證</strong>：嚴格檢查使用者輸入的格式</li>
+                    <li><strong>WAF 規則</strong>：偵測異常的查詢模式</li>
+                    <li><strong>監控異常</strong>：記錄並警示異常的查詢行為</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tab 5: AI 時代的防護 -->
+        <div id="tab5" class="content-section">
+            <h2>🤖 AI 時代如何避免 SQL Injection</h2>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ 重要提醒</strong><br>
+                當你使用 AI（如 ChatGPT、Claude、Copilot）來產生程式碼時，AI 可能會生成有漏洞的程式碼。你必須知道如何檢查和修正！
+            </div>
+
+            <h3>🔹 AI 可能產生的有漏洞程式碼</h3>
+
+            <div class="two-column">
+                <div>
+                    <h4>❌ AI 常見的錯誤範例</h4>
+                    <div class="code-block">
+<code><span class="comment">// AI 可能直接拼接字串</span>
+<span class="keyword">const</span> username = req.body.username;
+<span class="keyword">const</span> query = <span class="string">`SELECT * FROM users 
+                WHERE username='${username}'`</span>;
+
+<span class="comment">// PHP 版本</span>
+<span class="keyword">$sql</span> = <span class="string">"SELECT * FROM users 
+        WHERE id="</span> . <span class="keyword">$_GET</span>[<span class="string">'id'</span>];
+
+<span class="comment">// Python 版本</span>
+query = <span class="string">f"SELECT * FROM users 
+         WHERE email='{email}'"</span></code>
+                    </div>
+                </div>
+
+                <div>
+                    <h4>✅ 要求 AI 使用安全的方法</h4>
+                    <div class="code-block">
+<code><span class="comment">// Node.js with prepared statement</span>
+<span class="keyword">const</span> query = <span class="string">'SELECT * FROM users 
+                WHERE username = ?'</span>;
+db.<span class="function">execute</span>(query, [username]);
+
+<span class="comment">// PHP PDO</span>
+<span class="keyword">$stmt</span> = <span class="keyword">$pdo</span>-><span class="function">prepare</span>(
+  <span class="string">"SELECT * FROM users WHERE id = :id"</span>
+);
+<span class="keyword">$stmt</span>-><span class="function">execute</span>([<span class="string">'id'</span> => <span class="keyword">$id</span>]);
+
+<span class="comment">// Python with parameterized query</span>
+cursor.<span class="function">execute</span>(
+  <span class="string">"SELECT * FROM users WHERE email = %s"</span>,
+  (email,)
+)</code>
+                    </div>
+                </div>
+            </div>
+
+            <h3>🔹 與 AI 對話的最佳實踐</h3>
+
+            <div class="demo-box">
+                <h4>✨ 好的提示詞（Prompt）範例</h4>
+
+                <div class="alert alert-success">
+                    <strong>👍 這樣問 AI：</strong>
+                    <p>「請幫我寫一個 PHP 登入功能，<strong>必須使用 PDO 的 prepared statements</strong> 來防止 SQL injection，不要使用字串拼接的方式。」</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>👍 或是這樣：</strong>
+                    <p>「請檢查這段程式碼是否有 SQL injection 漏洞，如果有請幫我用安全的方式改寫：[貼上你的程式碼]」</p>
+                </div>
+
+                <div class="alert alert-danger">
+                    <strong>👎 不好的問法：</strong>
+                    <p>「寫一個登入功能」（太簡略，AI 可能會用不安全的方式）</p>
+                </div>
+            </div>
+
+            <h3>🔹 程式碼檢查清單</h3>
+
+            <div class="practice-area">
+                <h4>📋 當你拿到 AI 產生的程式碼時，請檢查：</h4>
+                
+                <table>
+                    <tr>
+                        <th style="width: 30%">檢查項目</th>
+                        <th style="width: 35%">❌ 危險信號</th>
+                        <th style="width: 35%">✅ 安全信號</th>
+                    </tr>
+                    <tr>
+                        <td><strong>SQL 查詢方式</strong></td>
+                        <td>
+                            使用字串拼接<br>
+                            <code>"... WHERE id=" + id</code><br>
+                            <code>f"... WHERE name='{name}'"</code>
+                        </td>
+                        <td>
+                            使用參數化查詢<br>
+                            <code>prepare("... WHERE id=?")</code><br>
+                            <code>execute("...WHERE id=%s")</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>使用者輸入</strong></td>
+                        <td>
+                            直接使用 <code>$_GET</code>, <code>$_POST</code><br>
+                            沒有任何過濾或驗證
+                        </td>
+                        <td>
+                            有輸入驗證<br>
+                            使用白名單機制<br>
+                            限制長度和格式
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>錯誤處理</strong></td>
+                        <td>
+                            直接顯示 SQL 錯誤訊息<br>
+                            <code>die($sql_error)</code>
+                        </td>
+                        <td>
+                            記錄錯誤但不顯示細節<br>
+                            顯示通用錯誤訊息
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>資料庫權限</strong></td>
+                        <td>
+                            使用 root 帳號<br>
+                            權限過大
+                        </td>
+                        <td>
+                            專用帳號<br>
+                            最小權限原則
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>🔹 各語言的安全範例</h3>
+
+            <div class="demo-box">
+                <h4>PHP - 使用 PDO Prepared Statements</h4>
+                <div class="code-block">
+<code><span class="comment">// ✅ 安全的 PDO 寫法</span>
+<span class="keyword">try</span> {
+    <span class="keyword">$pdo</span> = <span class="keyword">new</span> <span class="function">PDO</span>(<span class="string">'mysql:host=localhost;dbname=mydb'</span>, <span class="string">'user'</span>, <span class="string">'pass'</span>);
+    <span class="keyword">$pdo</span>->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    <span class="comment">// 準備語句</span>
+    <span class="keyword">$stmt</span> = <span class="keyword">$pdo</span>-><span class="function">prepare</span>(<span class="string">"SELECT * FROM users WHERE username = :username AND password = :password"</span>);
+    
+    <span class="comment">// 綁定參數</span>
+    <span class="keyword">$stmt</span>-><span class="function">bindParam</span>(<span class="string">':username'</span>, <span class="keyword">$username</span>);
+    <span class="keyword">$stmt</span>-><span class="function">bindParam</span>(<span class="string">':password'</span>, <span class="keyword">$password</span>);
+    
+    <span class="comment">// 執行查詢</span>
+    <span class="keyword">$stmt</span>-><span class="function">execute</span>();
+    <span class="keyword">$user</span> = <span class="keyword">$stmt</span>-><span class="function">fetch</span>();
+    
+} <span class="keyword">catch</span> (PDOException <span class="keyword">$e</span>) {
+    <span class="comment">// 記錄錯誤，但不顯示給使用者</span>
+    <span class="function">error_log</span>(<span class="keyword">$e</span>->getMessage());
+    <span class="keyword">die</span>(<span class="string">'系統發生錯誤，請稍後再試'</span>);
+}</code>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>Node.js - 使用參數化查詢</h4>
+                <div class="code-block">
+<code><span class="comment">// ✅ 使用 mysql2 的 prepared statements</span>
+<span class="keyword">const</span> mysql = <span class="function">require</span>(<span class="string">'mysql2/promise'</span>);
+
+<span class="keyword">async function</span> <span class="function">login</span>(username, password) {
+    <span class="keyword">const</span> connection = <span class="keyword">await</span> mysql.<span class="function">createConnection</span>({
+        host: <span class="string">'localhost'</span>,
+        user: <span class="string">'dbuser'</span>,
+        password: <span class="string">'dbpass'</span>,
+        database: <span class="string">'mydb'</span>
+    });
+    
+    <span class="comment">// 使用 ? 作為佔位符</span>
+    <span class="keyword">const</span> [rows] = <span class="keyword">await</span> connection.<span class="function">execute</span>(
+        <span class="string">'SELECT * FROM users WHERE username = ? AND password = ?'</span>,
+        [username, password]
+    );
+    
+    <span class="keyword">return</span> rows;
+}</code>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>Python - 使用參數化查詢</h4>
+                <div class="code-block">
+<code><span class="comment"># ✅ 使用 pymysql 的參數化查詢</span>
+<span class="keyword">import</span> pymysql
+
+<span class="keyword">def</span> <span class="function">login</span>(username, password):
+    connection = pymysql.<span class="function">connect</span>(
+        host=<span class="string">'localhost'</span>,
+        user=<span class="string">'dbuser'</span>,
+        password=<span class="string">'dbpass'</span>,
+        database=<span class="string">'mydb'</span>
+    )
+    
+    <span class="keyword">try</span>:
+        <span class="keyword">with</span> connection.<span class="function">cursor</span>() <span class="keyword">as</span> cursor:
+            <span class="comment"># 使用 %s 作為佔位符（不要用 %格式化）</span>
+            sql = <span class="string">"SELECT * FROM users WHERE username=%s AND password=%s"</span>
+            cursor.<span class="function">execute</span>(sql, (username, password))
+            result = cursor.<span class="function">fetchone</span>()
+            <span class="keyword">return</span> result
+    <span class="keyword">finally</span>:
+        connection.<span class="function">close</span>()</code>
+                </div>
+            </div>
+
+            <h3>🔹 給開發者的建議</h3>
+
+            <div class="tip-box">
+                <strong>🎯 使用 AI 輔助開發時的最佳實踐：</strong>
+                <ol>
+                    <li><strong>明確要求安全性</strong>：在 prompt 中特別要求使用安全的方法</li>
+                    <li><strong>要求程式碼審查</strong>：請 AI 檢查現有程式碼的安全性</li>
+                    <li><strong>學習安全知識</strong>：了解基本的安全概念，能夠識別問題</li>
+                    <li><strong>查看官方文件</strong>：驗證 AI 建議的方法是否正確</li>
+                    <li><strong>使用安全工具</strong>：搭配 SAST（靜態程式碼分析）工具</li>
+                    <li><strong>程式碼審查</strong>：不要完全信任 AI，要人工檢查</li>
+                    <li><strong>定期更新</strong>：保持框架和函式庫的最新版本</li>
+                </ol>
+            </div>
+
+            <div class="demo-box">
+                <h4>🎓 互動練習：AI 程式碼審查</h4>
+                <p>下面是 AI 產生的程式碼，試試看找出安全問題！</p>
+
+                <div class="code-block">
+<code><span class="comment">// AI 產生的程式碼 - 找找看哪裡有問題？</span>
+<span class="keyword">function</span> <span class="function">searchProducts</span>(keyword) {
+    <span class="keyword">const</span> query = <span class="string">`SELECT * FROM products WHERE name LIKE '%${keyword}%'`</span>;
+    <span class="keyword">return</span> db.<span class="function">query</span>(query);
+}</code>
+                </div>
+
+                <button class="btn" onclick="checkAICode()">🔍 檢查程式碼</button>
+                <button class="btn btn-success" onclick="showFixedCode()">✅ 顯示修正版</button>
+
+                <div class="result-box" id="aiCodeResult" style="display:none;"></div>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>📚 延伸學習資源：</strong>
+                <ul>
+                    <li><strong>OWASP Top 10</strong>：了解最常見的 Web 安全風險</li>
+                    <li><strong>PortSwigger Web Security Academy</strong>：免費的互動式安全教學</li>
+                    <li><strong>DVWA (Damn Vulnerable Web Application)</strong>：練習環境</li>
+                    <li><strong>SQLMap</strong>：自動化 SQL 注入工具（僅用於測試）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模擬資料庫
+        const database = {
+            users: [
+                { id: 1, username: 'admin', password: 'secret123', email: 'admin@example.com', role: 'administrator' },
+                { id: 2, username: 'user1', password: 'pass456', email: 'user1@example.com', role: 'user' },
+                { id: 3, username: 'john', password: 'john123', email: 'john@example.com', role: 'user' }
+            ],
+            products: [
+                { id: 1, name: 'iPhone 15', price: 35900, category: '手機' },
+                { id: 2, name: 'MacBook Pro', price: 65900, category: '筆電' },
+                { id: 3, name: 'AirPods', price: 7490, category: '配件' }
+            ]
+        };
+
+        // Tab 切換
+        function showTab(tabId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // SQL 查詢模擬器
+        function executeSQL() {
+            const query = document.getElementById('sqlQuery').value;
+            const resultDiv = document.getElementById('sqlResult');
+
+            try {
+                if (query.toUpperCase().includes('SELECT * FROM USERS')) {
+                    let html = '<table><tr><th>ID</th><th>使用者名稱</th><th>Email</th><th>角色</th></tr>';
+                    database.users.forEach(user => {
+                        html += `<tr><td>${user.id}</td><td>${user.username}</td><td>${user.email}</td><td>${user.role}</td></tr>`;
+                    });
+                    html += '</table>';
+                    resultDiv.innerHTML = html;
+                } else if (query.toUpperCase().includes('SELECT * FROM PRODUCTS')) {
+                    let html = '<table><tr><th>ID</th><th>產品名稱</th><th>價格</th><th>分類</th></tr>';
+                    database.products.forEach(product => {
+                        html += `<tr><td>${product.id}</td><td>${product.name}</td><td>NT$ ${product.price}</td><td>${product.category}</td></tr>`;
+                    });
+                    html += '</table>';
+                    resultDiv.innerHTML = html;
+                } else if (query.toUpperCase().includes('WHERE ID = 1')) {
+                    const user = database.users.find(u => u.id === 1);
+                    resultDiv.innerHTML = `<table><tr><th>ID</th><th>使用者名稱</th><th>Email</th></tr>
+                        <tr><td>${user.id}</td><td>${user.username}</td><td>${user.email}</td></tr></table>`;
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #00f2fe;">✅ SQL 查詢執行成功！<br>提示：試試看 SELECT * FROM users 或 SELECT * FROM products</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: #f5576c;">❌ SQL 語法錯誤</p>`;
+            }
+        }
+
+        // 有漏洞的登入
+        function vulnerableLogin() {
+            const username = document.getElementById('vulnUsername').value;
+            const password = document.getElementById('vulnPassword').value;
+
+            // 模擬 SQL 拼接
+            const query = `SELECT * FROM users WHERE username='${username}' AND password='${password}'`;
+
+            document.getElementById('queryDisplay').innerHTML = `執行的 SQL：<br>${query}`;
+
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.className = 'result-box vulnerable';
+
+            // 檢查是否有 SQL 注入
+            if (username.includes("' OR '1'='1") || password.includes("' OR '1'='1") || 
+                username.includes("'--") || username.includes("' --")) {
+                resultDiv.innerHTML = `
+                    <h3 style="color: #f5576c;">⚠️ SQL Injection 攻擊成功！</h3>
+                    <p><strong>你成功繞過了登入驗證！</strong></p>
+                    <p>這個查詢會變成：</p>
+                    <div class="code-block" style="margin: 10px 0;">
+                        <code>${query}</code>
+                    </div>
+                    <p>因為 <code>' OR '1'='1'</code> 會讓條件永遠成立，所以不需要正確的密碼就能登入！</p>
+                    <div class="alert alert-danger">
+                        <strong>風險：</strong>攻擊者可以存取任何帳號，甚至是管理員帳號！
+                    </div>
+                `;
+            } else {
+                // 正常登入檢查
+                const user = database.users.find(u => u.username === username && u.password === password);
+                if (user) {
+                    resultDiv.innerHTML = `<p style="color: #00f2fe;">✅ 登入成功！歡迎 ${user.username}</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: #f5576c;">❌ 帳號或密碼錯誤</p>`;
+                }
+            }
+        }
+
+        // 安全的登入
+        function safeLogin() {
+            const username = document.getElementById('vulnUsername').value;
+            const password = document.getElementById('vulnPassword').value;
+
+            document.getElementById('queryDisplay').innerHTML = `
+                使用 Prepared Statement：<br>
+                SELECT * FROM users WHERE username=? AND password=?<br>
+                參數：['${username}', '${password}']
+            `;
+
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.className = 'result-box safe';
+
+            // 使用參數化查詢（模擬）- 不會受到 SQL 注入影響
+            const user = database.users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                resultDiv.innerHTML = `
+                    <h3 style="color: #00f2fe;">✅ 安全登入成功！</h3>
+                    <p>歡迎 ${user.username}！</p>
+                    <div class="alert alert-success">
+                        使用 Prepared Statement 可以防止 SQL Injection，因為使用者輸入會被當作「資料」而不是「SQL 程式碼」！
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <p style="color: #f5576c;">❌ 帳號或密碼錯誤</p>
+                    <div class="alert alert-info">
+                        即使輸入惡意的 SQL 語法，Prepared Statement 也會把它當作純文字來處理，所以無法注入！
+                    </div>
+                `;
+            }
+        }
+
+        // Union Select 步驟切換
+        let currentUnionStep = 1;
+
+        function showUnionStep(step) {
+            // 隱藏所有步驟
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`unionStep${i}`).style.display = 'none';
+            }
+            // 顯示選擇的步驟
+            document.getElementById(`unionStep${step}`).style.display = 'block';
+
+            // 更新步驟指示器
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            event.target.closest('.step').classList.add('active');
+
+            currentUnionStep = step;
+        }
+
+        // Union 注入測試 - 步驟1
+        function testUnionStep1() {
+            const input = document.getElementById('unionTest1').value;
+            const resultDiv = document.getElementById('unionResult1');
+
+            if (input.includes('ORDER BY 3') || input.includes('ORDER BY 2') || input.includes('ORDER BY 1')) {
+                resultDiv.className = 'result-box safe';
+                resultDiv.innerHTML = `
+                    <p style="color: #00f2fe;">✅ 查詢成功！沒有錯誤</p>
+                    <p>這表示欄位數量 ≥ ${input.match(/ORDER BY (\d)/)[1]}</p>
+                `;
+            } else if (input.includes('ORDER BY 4') || input.includes('ORDER BY 5')) {
+                resultDiv.className = 'result-box vulnerable';
+                resultDiv.innerHTML = `
+                    <p style="color: #f5576c;">❌ SQL 錯誤！</p>
+                    <p><strong>Unknown column '${input.match(/ORDER BY (\d)/)[1]}' in 'order clause'</strong></p>
+                    <p>👉 這表示欄位數量少於 ${input.match(/ORDER BY (\d)/)[1]} 個</p>
+                    <div class="alert alert-success" style="margin-top: 10px;">
+                        <strong>結論：</strong>這個查詢有 <strong>3 個欄位</strong>！
+                    </div>
+                `;
+            } else if (input.includes('UNION SELECT NULL,NULL,NULL')) {
+                resultDiv.className = 'result-box safe';
+                resultDiv.innerHTML = `
+                    <p style="color: #00f2fe;">✅ UNION 查詢成功！</p>
+                    <p><strong>確認欄位數量為 3 個</strong></p>
+                `;
+            } else {
+                resultDiv.innerHTML = `<p style="color: #999;">試試看使用 ORDER BY 或 UNION SELECT NULL 來測試欄位數量</p>`;
+            }
+        }
+
+        // Union 注入測試 - 步驟2
+        function testUnionStep2() {
+            const input = document.getElementById('unionTest2').value;
+            const resultDiv = document.getElementById('unionResult2');
+
+            if (input.includes("UNION SELECT") && (input.includes('TEST') || input.includes("1") || input.includes("2"))) {
+                resultDiv.className = 'result-box safe';
+                resultDiv.innerHTML = `
+                    <h4>查詢結果：</h4>
+                    <table>
+                        <tr><th>產品名稱</th><th>價格</th><th>分類</th></tr>
+                        <tr><td>iPhone 15</td><td>NT$ 35900</td><td>手機</td></tr>
+                        <tr><td>TEST1</td><td>TEST2</td><td>TEST3</td></tr>
+                    </table>
+                    <div class="alert alert-success" style="margin-top: 10px;">
+                        <strong>發現：</strong>所有三個欄位都會顯示在網頁上！<br>
+                        我們可以在這些位置顯示想要的資料。
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `<p style="color: #999;">試試看使用 UNION SELECT 'TEST1','TEST2','TEST3'</p>`;
+            }
+        }
+
+        // Union 注入測試 - 步驟3
+        function testUnionStep3() {
+            const input = document.getElementById('unionTest3').value;
+            const resultDiv = document.getElementById('unionResult3');
+
+            if (input.includes('information_schema.tables') || input.includes('DATABASE()')) {
+                resultDiv.className = 'result-box vulnerable';
+                resultDiv.innerHTML = `
+                    <h4>資料庫資訊：</h4>
+                    <table>
+                        <tr><th>資料表名稱</th><th>資料表類型</th><th>引擎</th></tr>
+                        <tr><td>users</td><td>BASE TABLE</td><td>InnoDB</td></tr>
+                        <tr><td>products</td><td>BASE TABLE</td><td>InnoDB</td></tr>
+                        <tr><td>orders</td><td>BASE TABLE</td><td>InnoDB</td></tr>
+                    </table>
+                    <div class="alert alert-warning" style="margin-top: 10px;">
+                        <strong>⚠️ 資訊洩漏！</strong><br>
+                        攻擊者現在知道資料庫有 users、products、orders 這些資料表了！
+                    </div>
+                `;
+            } else if (input.includes('information_schema.columns')) {
+                resultDiv.className = 'result-box vulnerable';
+                resultDiv.innerHTML = `
+                    <h4>users 資料表的欄位：</h4>
+                    <table>
+                        <tr><th>欄位名稱</th><th>資料型態</th><th>是否可為空</th></tr>
+                        <tr><td>id</td><td>int(11)</td><td>NO</td></tr>
+                        <tr><td>username</td><td>varchar(50)</td><td>NO</td></tr>
+                        <tr><td>password</td><td>varchar(255)</td><td>NO</td></tr>
+                        <tr><td>email</td><td>varchar(100)</td><td>YES</td></tr>
+                        <tr><td>role</td><td>varchar(20)</td><td>YES</td></tr>
+                    </table>
+                    <div class="alert alert-danger" style="margin-top: 10px;">
+                        <strong>🚨 嚴重洩漏！</strong><br>
+                        攻擊者現在知道資料表結構了，可以直接讀取 username 和 password 欄位！
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `<p style="color: #999;">試試看查詢 information_schema</p>`;
+            }
+        }
+
+        // Union 注入測試 - 步驟4
+        function testUnionStep4() {
+            const input = document.getElementById('unionTest4').value;
+            const resultDiv = document.getElementById('unionResult4');
+
+            if (input.includes('FROM users')) {
+                resultDiv.className = 'result-box vulnerable';
+                resultDiv.innerHTML = `
+                    <h4>🚨 敏感資料外洩！</h4>
+                    <table>
+                        <tr><th>使用者名稱</th><th>密碼</th><th>Email</th></tr>
+                        <tr><td>admin</td><td>secret123</td><td>admin@example.com</td></tr>
+                        <tr><td>user1</td><td>pass456</td><td>user1@example.com</td></tr>
+                        <tr><td>john</td><td>john123</td><td>john@example.com</td></tr>
+                    </table>
+                    <div class="alert alert-danger" style="margin-top: 10px;">
+                        <strong>💀 攻擊成功！</strong><br>
+                        攻擊者成功取得所有使用者的帳號密碼！這就是 UNION SELECT 注入的威力。<br><br>
+                        <strong>防禦方法：</strong>
+                        <ul>
+                            <li>使用 Prepared Statements</li>
+                            <li>輸入驗證和過濾</li>
+                            <li>最小權限原則（資料庫帳號不要有過多權限）</li>
+                            <li>使用 WAF（Web Application Firewall）</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `<p style="color: #999;">試試看使用 UNION SELECT 來讀取 users 資料表</p>`;
+            }
+        }
+
+        // Boolean-based 盲注測試
+        function testBlindInjection() {
+            const input = document.getElementById('blindTest').value;
+            const resultDiv = document.getElementById('blindResult');
+            const queryDiv = document.getElementById('blindQuery');
+
+            const query = `SELECT * FROM users WHERE username='${input}' AND password='xxx'`;
+            queryDiv.innerHTML = `執行的查詢：<br><code>${query}</code>`;
+
+            // 檢查盲注測試
+            if (input.includes("SUBSTRING(password,1,1)='s'") || input.includes("SUBSTR(password,1,1)='s'")) {
+                resultDiv.className = 'result-box safe';
+                resultDiv.innerHTML = `
+                    <p style="color: #00f2fe;">✅ 登入成功！</p>
+                    <div class="alert alert-success">
+                        <strong>條件為真！</strong><br>
+                        這表示 admin 的密碼第一個字確實是 's'！<br><br>
+                        透過這種方式，攻擊者可以逐字猜測整個密碼。
+                    </div>
+                `;
+                document.getElementById('blindGuessing').style.display = 'block';
+            } else if (input.includes("SUBSTRING(password,1,1)=") || input.includes("SUBSTR(password,1,1)=")) {
+                resultDiv.className = 'result-box vulnerable';
+                resultDiv.innerHTML = `
+                    <p style="color: #f5576c;">❌ 登入失敗</p>
+                    <div class="alert alert-warning">
+                        <strong>條件為假</strong><br>
+                        這個字元不對，繼續猜測其他字元...
+                    </div>
+                `;
+            } else if (input.includes("' AND '1'='1'--")) {
+                resultDiv.className = 'result-box safe';
+                resultDiv.innerHTML = `
+                    <p style="color: #00f2fe;">✅ 登入成功！</p>
+                    <div class="alert alert-info">
+                        <strong>確認漏洞存在</strong><br>
+                        ' AND '1'='1'-- 讓條件永遠成立，確認系統有 SQL 注入漏洞。
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `<p style="color: #999;">試試看輸入：admin' AND SUBSTRING(password,1,1)='s'--</p>`;
+            }
+        }
+
+        // 自動猜測密碼
+        function autoGuessPassword() {
+            const resultDiv = document.getElementById('guessResult');
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            const targetPassword = 'secret123';
+            let guessedPassword = '';
+            let attempts = 0;
+
+            resultDiv.innerHTML = '<p>🤖 開始自動猜測...</p>';
+
+            let pos = 0;
+            const guessInterval = setInterval(() => {
+                if (pos >= targetPassword.length) {
+                    clearInterval(guessInterval);
+                    resultDiv.innerHTML += `
+                        <div class="alert alert-success">
+                            <strong>🎯 猜測完成！</strong><br>
+                            密碼是：<strong>${guessedPassword}</strong><br>
+                            總共嘗試：<strong>${attempts}</strong> 次<br><br>
+                            <em>這就是盲注的原理：透過不斷測試條件真假來推測資料。</em>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const currentChar = targetPassword[pos];
+                guessedPassword += currentChar;
+                attempts++;
+
+                resultDiv.innerHTML = `
+                    <p>🔍 正在猜測第 ${pos + 1} 個字元...</p>
+                    <p>目前進度：<strong>${guessedPassword}</strong>${'?'.repeat(targetPassword.length - pos - 1)}</p>
+                    <p>嘗試次數：${attempts}</p>
+                `;
+
+                pos++;
+            }, 500);
+        }
+
+        // Time-based 盲注測試
+        function testTimeBlindInjection() {
+            const input = document.getElementById('timeBlindTest').value;
+            const resultDiv = document.getElementById('timeBlindResult');
+
+            resultDiv.innerHTML = '<p>⏳ 執行中，請稍候...</p>';
+
+            // 模擬延遲
+            if (input.includes('SLEEP') || input.includes('BENCHMARK')) {
+                setTimeout(() => {
+                    resultDiv.className = 'result-box vulnerable';
+                    resultDiv.innerHTML = `
+                        <p style="color: #f5576c;">⏱️ 回應時間：3.2 秒</p>
+                        <div class="alert alert-danger">
+                            <strong>時間延遲攻擊成功！</strong><br>
+                            正常查詢應該在 0.1 秒內完成，但這次花了 3.2 秒。<br>
+                            這表示 IF 條件為真，SLEEP() 被執行了。<br><br>
+                            攻擊者可以利用這個時間差異來猜測資料庫內容，即使網頁沒有顯示任何資訊。
+                        </div>
+                    `;
+                }, 3000);
+            } else {
+                setTimeout(() => {
+                    resultDiv.className = 'result-box safe';
+                    resultDiv.innerHTML = `
+                        <p style="color: #00f2fe;">⏱️ 回應時間：0.08 秒</p>
+                        <p>正常的查詢速度</p>
+                    `;
+                }, 100);
+            }
+        }
+
+        // AI 程式碼檢查
+        function checkAICode() {
+            const resultDiv = document.getElementById('aiCodeResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result-box vulnerable';
+            resultDiv.innerHTML = `
+                <h4>🔍 程式碼安全分析：</h4>
+                <div class="alert alert-danger">
+                    <strong>❌ 發現嚴重的安全漏洞！</strong>
+                </div>
+                <p><strong>問題 1：SQL 注入漏洞</strong></p>
+                <ul>
+                    <li>使用模板字串 (template literal) 直接拼接使用者輸入</li>
+                    <li><code>\${keyword}</code> 的內容會被直接插入 SQL 查詢中</li>
+                    <li>攻擊者可以輸入：<code>%' OR '1'='1</code> 來繞過查詢限制</li>
+                </ul>
+                <p><strong>潛在攻擊範例：</strong></p>
+                <div class="code-block">
+<code><span class="comment">// 使用者輸入：%' UNION SELECT username,password,email FROM users--</span>
+<span class="comment">// 實際執行的 SQL：</span>
+SELECT * FROM products 
+WHERE name LIKE '%%' UNION SELECT username,password,email FROM users--%'</code>
+                </div>
+                <p><strong>風險等級：</strong><span style="color: #f5576c; font-weight: bold;">🔴 高風險</span></p>
+            `;
+        }
+
+        function showFixedCode() {
+            const resultDiv = document.getElementById('aiCodeResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result-box safe';
+            resultDiv.innerHTML = `
+                <h4>✅ 修正後的安全程式碼：</h4>
+                <div class="code-block">
+<code><span class="comment">// ✅ 使用參數化查詢（Prepared Statement）</span>
+<span class="keyword">function</span> <span class="function">searchProducts</span>(keyword) {
+    <span class="comment">// 方法 1：使用 ? 佔位符</span>
+    <span class="keyword">const</span> query = <span class="string">'SELECT * FROM products WHERE name LIKE ?'</span>;
+    <span class="keyword">const</span> params = [<span class="string">\`%\${keyword}%\`</span>];
+    <span class="keyword">return</span> db.<span class="function">execute</span>(query, params);
+    
+    <span class="comment">// 方法 2：使用 ORM（例如 Sequelize）</span>
+    <span class="keyword">return</span> Product.<span class="function">findAll</span>({
+        where: {
+            name: {
+                [Op.like]: <span class="string">\`%\${keyword}%\`</span>
+            }
+        }
+    });
+}</code>
+                </div>
+                <div class="alert alert-success">
+                    <strong>為什麼這樣是安全的？</strong>
+                    <ul>
+                        <li>使用者輸入被當作「資料」而不是「程式碼」</li>
+                        <li>資料庫會自動處理特殊字元的跳脫</li>
+                        <li>即使輸入惡意的 SQL 語法也不會被執行</li>
+                    </ul>
+                </div>
+                <div class="alert alert-info">
+                    <strong>💡 提示：要求 AI 使用安全方法</strong><br>
+                    下次問 AI 時可以這樣說：<br>
+                    「請用 prepared statement 改寫這段程式碼」<br>
+                    「請確保這段程式碼能防止 SQL injection」
+                </div>
+            `;
+        }
+
+        // 初始化
+        window.onload = function() {
+            console.log('SQL Injection 教學系統已載入');
+        };
+    </script>
+</body>
+</html>
